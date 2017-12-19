@@ -1,0 +1,456 @@
+Description: Port functionality of comp script needed by opaconfig
+ opaconfig allows a package to override certain funcionality. This
+ patch ports the required functionality of .comp_ofed_delta to Debian.
+ .
+ For the most part, that means use dpkg utilities instead of RPM.
+ .
+ opa-scripts (1.1-1-2ifs) UNRELEASED; urgency=medium
+ .
+   * Port parts of .comp_ofed_delta required by opaconfig to Debian.
+
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Copyright: 2017 System Fabric Works, Inc. All Rights Reserved.
+Forwarded: not-needed
+Last-Update: <2017-10-05>
+
+---
+
+--- a/.comp_ofed_delta.pl
++++ b/.comp_ofed_delta.pl
+@@ -257,6 +257,20 @@
+ 				"delta_debug",		# must be last real component
+ );
+ 
++my @delta_components_debian8 = (
++				"opa_stack", 		# Kernel drivers.
++				"ibacm", 			# OFA IB communication manager assistant.
++				"intel_hfi", 		# HFI drivers
++				"delta_ipoib", 		# ipoib module.
++				"mpi_selector",
++				"mvapich2",
++				"openmpi",
++				"opa_stack_dev", 	# dev libraries.
++				"delta_mpisrc", 	# Source bundle for MPIs.
++				"hfi1_uefi",
++				"delta_debug",		# must be last real component
++	);
++
+ my @delta_components_rhel72 = ( @delta_components_other );
+ 
+ my @delta_components_rhel67 = ( @delta_components_other );
+@@ -533,6 +547,18 @@
+ 					},
+ );
+ 
++my %opa_stack_dev_debian8_comp_info = (
++	'opa_stack_dev' => {
++					KernelRpms => [ ],
++					UserRpms =>  [ "ifs-kernel-updates-devel", "ibacm-devel",
++						"libibumad-devel", "libibmad-devel"],
++					DebugRpms =>  [  ],
++					Drivers => "", 	# none
++					StartupScript => "",
++					StartupParams => [ ],
++					},
++);
++
+ my %opa_stack_dev_rhel70_comp_info = (
+         'opa_stack_dev' => {
+                                         KernelRpms => [ "" ],
+@@ -666,6 +692,22 @@
+ 					},
+ );
+ 
++my %opa_stack_debian8_comp_info = (
++	'opa_stack' => {
++					KernelRpms => [ "kmod-ifs-kernel-updates" ], # special case
++					UserRpms =>	  [ "opa-scripts",
++								"srptools",
++								"libibmad", "libibumad", "librdmacm",
++								"infiniband-diags",
++								  ],
++					DebugRpms =>  [ "srptools-debuginfo",
++								  ],
++					Drivers => "",
++					StartupScript => "opa",
++					StartupParams => [ "ARPTABLE_TUNING" ],
++					},
++);
++
+ my %opa_stack_rhel67_comp_info = (
+ 	'opa_stack' => {
+ 					KernelRpms => [ "ifs-kernel-updates" ], # special case
+@@ -776,6 +818,21 @@
+ 	%delta_debug_comp_info,
+ );
+ 
++my %delta_comp_info_debian8 = (
++	%opa_stack_debian8_comp_info,
++	%ibacm_comp_info,
++	%intel_hfi_comp_info,
++	%ib_wfr_lite_comp_info,
++	%delta_ipoib_comp_info,
++	%mpi_selector_comp_info,
++	%mvapich2_comp_info,
++	%openmpi_comp_info,
++	%opa_stack_dev_debian8_comp_info,
++	%delta_mpisrc_comp_info,
++	%hfi1_uefi_comp_info,
++	%delta_debug_comp_info,
++);
++
+ my %delta_comp_info_rhel67 = (
+ 	%opa_stack_rhel67_comp_info,
+ 	%ibacm_comp_info,
+@@ -897,6 +954,7 @@
+ # all kernel srpms
+ # these are in the order we must build/process them to meet basic dependencies
+ my @delta_kernel_srpms_other = ( 'compat-rdma' );
++my @delta_kernel_srpms_debian8 = ( 'kmod-ifs-kernel-updates' );
+ my @delta_kernel_srpms_rhel72 = ( 'kmod-ifs-kernel-updates' );
+ my @delta_kernel_srpms_rhel70 = ( 'compat-rdma' );
+ my @delta_kernel_srpms_rhel67 = ( 'ifs-kernel-updates' );
+@@ -913,6 +971,12 @@
+  		"mvapich2", "openmpi", "gasnet", "openshmem", "openshmem-test-suite",
+ 		"shmem-benchmarks", "srptools", "libibmad", "infiniband-diags", "hfi1_uefi"
+ );
++my @delta_user_srpms_debian8 = (
++		"opa-scripts", "mpi-selector", "ibacm",
++		"libhfi1", "libpsm2", "hfi1-diagtools-sw", "hfidiags", "hfi1-firmware", "hfi1-firmware_debug",
++ 		"mvapich2", "openmpi",
++	    "srptools", "libibumad", "libibmad", "infiniband-diags", "hfi1_uefi"
++);
+ my @delta_user_srpms_rhel67 = (
+ 		"opa-scripts", "libibumad", "ibacm", "mpi-selector",
+ 		"libhfi1", "libpsm2", "hfi1-diagtools-sw", "hfidiags", "hfi1-firmware", "hfi1-firmware_debug",
+@@ -1063,6 +1127,15 @@
+ 					},
+ );
+ 
++my %libibmad_srpm_info = (
++	"libibmad" =>	{ Available => "",
++					  Builds => "libibmad libibmad-devel libibumad-debuginfo",
++					  PostReq => "libibmad libibmad-devel",
++					  PartOf => "", # filled in at runtime
++					  BuildPrereq => [ 'libtool any user' ],
++					},
++);
++
+ my %libibumad3_srpm_info = (
+ 	"libibumad3" =>	{ Available => "",
+ 					  Builds => "libibumad3 libibumad-devel libibumad-static",
+@@ -1253,6 +1326,32 @@
+ 	%hfi1_uefi_srpm_info,
+ );
+ 
++my %delta_srpm_info_debian8 = (
++	%kmod_ifs_kernel_updates_srpm_info,
++	%hfi1_psm_srpm_info,
++	%libhfi1_srpm_info,
++	%hfi1_diagtools_sw_srpm_info,
++	%hfidiags_srpm_info,
++	%hfi1_firmware_srpm_info,
++	%hfi1_firmware_debug_srpm_info,
++	%ib_wfr_lite_srpm_info,
++	%opa_scripts_srpm_info,
++	%libibumad3_srpm_info,
++	%libibumad_srpm_info,
++	%ibacm_srpm_info,
++	%mpi_selector_srpm_info,
++	%mvapich2_srpm_info,
++	%openmpi_srpm_info,
++	%gasnet_srpm_info,
++	%openshmem_srpm_info,
++	%openshmem_test_suite_srpm_info,
++	%shmem_benchmarks_srpm_info,
++	%srptools_srpm_info,
++	%libibmad_srpm_info,
++	%infiniband_diags_srpm_info,
++	%hfi1_uefi_srpm_info,
++);
++
+ my %delta_srpm_info_rhel67 = (
+ 	%ifs_kernel_updates_rhel67_srpm_info,
+ 	%hfi1_psm_srpm_info,
+@@ -1432,7 +1531,14 @@
+ 	%delta_rpm_info = ();	# start fresh
+ 
+ 	# filter components by distro
+-	if ("$CUR_DISTRO_VENDOR" eq 'SuSE'
++	 if ( "$CUR_DISTRO_VENDOR" eq 'debian'
++		  && "$CUR_VENDOR_VER" eq 'ES8' ) {
++		@delta_components = ( @delta_components_debian8 );
++		%delta_comp_info = ( %delta_comp_info_debian8 );
++		@delta_kernel_srpms = ( @delta_kernel_srpms_debian8 );
++		@delta_user_srpms = ( @delta_user_srpms_debian8 );
++		%delta_srpm_info = ( %delta_srpm_info_debian8 );
++	} elsif ("$CUR_DISTRO_VENDOR" eq 'SuSE'
+ 		&& ("$CUR_VENDOR_VER" eq 'ES12' || "$CUR_VENDOR_VER" eq 'ES121')) {
+ 		@delta_components = ( @delta_components_sles );
+ 		%delta_comp_info = ( %delta_comp_info_sles );
+@@ -1777,6 +1883,56 @@
+ 	}
+ }
+ 
++# uninstall debs which are in package_list and are not needed by
++# any components in install_list
++# all variations of the specified packages are uninstalled
++sub delta_deb_uninstall_not_needed_list($$$$@)
++{
++	my $install_list = shift();	# components which will remain on system
++	my $uninstalling_list = shift();	# components which are being uninstalled
++	my $comp = shift();	# component being uninstalled
++	my $verbosity = shift();
++	my(@package_list) = @_;	# package names to consider for uninstall
++
++DEB: foreach my $package ( reverse(@package_list) ) {
++		my @install_list = split /[[:space:]]+/, $install_list;
++		foreach my $c ( @install_list ) {
++			next if ( "$c" eq '' ); # handling leading spaces
++			# see if package is part of a component we are interested in
++			if ( " @delta_components " =~ / $c /
++				 && " $delta_rpm_info{$package}{'PartOf'} " =~ / $c / ) {
++				next DEB;	# its still needed, leave it installed
++			}
++		}
++		if ( $delta_rpm_info{$package}{'Available'} == 0 ) {
++			next DEB; # package was not installed.
++		}
++		# if we get here, package is not in any component we are interested in
++		if ( "$uninstalling_list" ne "" && "$comp" ne "" ) {
++			# we are doing an explicit uninstall, we must be careful
++			# about debs which are part of more than 1 component
++			# uninstalling_list is in dependency order and is executed
++			# backwards, so once we get to processing the 1st component
++			# in uninstalling list which has this package, we know its
++			# safe to remove the package
++			my @uninstalling = split /[[:space:]]+/, $uninstalling_list;
++			foreach my $c ( @uninstalling ) {
++				next if ( "$c" eq '' ); # handling leading spaces
++				if ( " @delta_components " =~ / $c /
++					&& " $delta_rpm_info{$package}{'PartOf'} " =~ / $c / ) {
++					# found 1st uninstalled component with package
++					if ("$c" ne "$comp") {
++						next DEB;	# don't remove til get to $c's uninstall
++					} else {
++						last;	# exit this loop and uninstall package
++					}
++				}
++			}
++		}
++		dpkg_uninstall($package, "any", " --nodeps ", $verbosity);
++	}
++}
++
+ 
+ # resolve filename within $srcdir/$SRPMS_SUBDIR
+ # and return filename relative to $srcdir
+@@ -2827,6 +2983,24 @@
+ 				 	$verbosity, @{ $delta_comp_info{$comp}{'KernelRpms'}});
+ }
+ 
++# uninstall all debs associated with an OFED Delta component
++sub uninstall_delta_comp_debs($$$$)
++{
++	my $comp = shift();
++	my $install_list = shift();
++	my $uninstalling_list = shift();
++	my $verbosity = shift();
++
++	# debuginfo never in >1 component, so do explicit uninstall since
++	# have an odd PartOf relationship which confuses uninstall_not_needed_list
++	dpkg_uninstall_list2("any", " --nodeps ", $verbosity,
++						 @{ $delta_comp_info{$comp}{'DebugRpms'}});
++	delta_deb_uninstall_not_needed_list($install_list, $uninstalling_list, $comp,
++				 	$verbosity, @{ $delta_comp_info{$comp}{'UserRpms'}});
++	delta_deb_uninstall_not_needed_list($install_list, $uninstalling_list, $comp,
++				 	$verbosity, @{ $delta_comp_info{$comp}{'KernelRpms'}});
++}
++
+ # helper which does most of the work for uninstalling rpms and drivers
+ # for an OFED component
+ # caller must handle any non-RPM files
+@@ -2837,7 +3011,11 @@
+ 	my $uninstalling_list = shift();
+ 	my $verbosity = shift();
+ 
+-	uninstall_delta_comp_rpms($comp, $install_list, $uninstalling_list, $verbosity);
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		uninstall_delta_comp_debs($comp, $install_list, $uninstalling_list, $verbosity);
++	} else {
++		uninstall_delta_comp_rpms($comp, $install_list, $uninstalling_list, $verbosity);
++	}
+ 	remove_delta_kernel_ib_drivers($comp, $verbosity);
+ }
+ 
+@@ -2940,7 +3118,10 @@
+ sub installed_delta_opa_stack()
+ {
+ 	my $driver_subdir=$ComponentInfo{'opa_stack'}{'DriverSubdir'};
+-	if ( "$CUR_VENDOR_VER" eq "ES67" ) {
++	if ( "$CUR_DISTRO_VENDOR" eq "debian" ) {
++		return ( -e "$ROOT$BASE_DIR/version_delta"
++				&& dpkg_is_installed("kmod-ifs-kernel-updates", $CUR_OS_VER));
++	} elsif ( "$CUR_VENDOR_VER" eq "ES67" ) {
+ 		return ( -e "$ROOT$BASE_DIR/version_delta" 
+ 				&& rpm_is_installed("libibumad", "user")
+ 				&& rpm_is_installed("ifs-kernel-updates", $CUR_OS_VER));
+@@ -3215,7 +3396,11 @@
+ sub installed_intel_hfi()
+ {
+     my $driver_subdir=$ComponentInfo{'intel_hfi'}{'DriverSubdir'};
+-    if ( "$CUR_VENDOR_VER" eq "ES67" ) {
++	if ( "$CUR_DISTRO_VENDOR" eq "debian" ) {
++		return ( -e "$ROOT$BASE_DIR/version_delta"
++				&& dpkg_is_installed("libhfi1", "user")
++				&& dpkg_is_installed("kmod-ifs-kernel-updates", $CUR_OS_VER));
++    } elsif ( "$CUR_VENDOR_VER" eq "ES67" ) {
+ 	return ( -e "$ROOT$BASE_DIR/version_delta"
+ 			&& rpm_is_installed("libhfi1", "user")
+                         && rpm_is_installed("ifs-kernel-updates", $CUR_OS_VER));
+@@ -3474,6 +3659,10 @@
+ 
+ sub installed_opa_stack_dev()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return (dpkg_is_installed("libibumad-dev", "user")
++				&& -e "$ROOT$BASE_DIR/version_delta");
++	}
+ 	return (rpm_is_installed("libibumad-devel", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta");
+ }
+@@ -3676,6 +3865,10 @@
+ 
+ sub installed_mpi_selector()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return (dpkg_is_installed("mpi-selector", "user")
++				&& -e "$ROOT$BASE_DIR/version_delta");
++	}
+ 	return (rpm_is_installed("mpi-selector", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta");
+ }
+@@ -3767,6 +3960,10 @@
+ 
+ sub installed_mvapich2()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return ((dpkg_is_installed("mvapich2_gcc", "user")
++				 && -e "$ROOT$BASE_DIR/version_delta"));
++	}
+ 	return ((rpm_is_installed("mvapich2_gcc", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta"));
+ }
+@@ -3866,6 +4063,10 @@
+ 
+ sub installed_openmpi()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return ((dpkg_is_installed("openmpi_gcc_hfi", "user")
++				 && -e "$ROOT$BASE_DIR/version_delta"));
++	}
+ 	return ((rpm_is_installed("openmpi_gcc_hfi", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta"));
+ }
+@@ -3965,6 +4166,10 @@
+ 
+ sub installed_gasnet()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return ((dpkg_is_installed("gasnet-gcc-hfi", "user")
++				 && -e "$ROOT$BASE_DIR/version_delta"));
++	}
+ 	return ((rpm_is_installed("gasnet_gcc_hfi", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta"));
+ }
+@@ -4064,6 +4269,10 @@
+ 
+ sub installed_openshmem()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return ((dpkg_is_installed("openshmem-gcc-hfi", "user")
++				 && -e "$ROOT$BASE_DIR/version_delta"));
++	}
+ 	return ((rpm_is_installed("openshmem_gcc_hfi", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta"));
+ }
+@@ -4162,11 +4371,20 @@
+ # check file_glob("$srcdir/SRPMS/mvapich-*.src.rpm") ne ""
+ # check file_glob("$srcdir/SRPMS/mvapich2-*.src.rpm") ne ""
+ # check file_glob("$srcdir/SRPMS/openmpi-*.src.rpm") ne ""
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return ( (-d "$srcdir" ) );
++	}
+ 	return ( (-d "$srcdir/SRPMS" || -d "$srcdir/RPMS" ) );
+ }
+ 
+ sub installed_delta_mpisrc()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return ((-e "$ROOT$BASE_DIR/version_delta"
++				 && file_glob("$ROOT/usr/src/opa/MPI/mvapich*.dsc") ne ""
++				 && file_glob("$ROOT/usr/src/opa/MPI/openmpi*.dsc") ne ""
++				 && file_glob("$ROOT/usr/src/opa/MPI/mpitests*.dsc") ne ""));
++	}
+ 	return ((-e "$ROOT$BASE_DIR/version_delta"
+ 			&& file_glob("$ROOT/usr/src/opa/MPI/mvapich*.src.rpm") ne ""
+ 			&& file_glob("$ROOT/usr/src/opa/MPI/openmpi*.src.rpm") ne ""
+@@ -4303,6 +4521,10 @@
+ 
+ sub installed_delta_debug()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return (dpkg_is_installed("libibumad3-dbg", "user")
++				&& -e "$ROOT$BASE_DIR/version_delta");
++	}
+ 	return (rpm_is_installed("libibumad-debuginfo", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta");
+ }
+@@ -4401,8 +4623,13 @@
+ 	# debuginfo never in >1 component, so do explicit uninstall since
+ 	# have an odd PartOf relationship which confuses uninstall_not_needed_list
+ 	foreach my $comp ( reverse(@delta_components) ) {
+-		rpm_uninstall_list2("any", " --nodeps ", 'verbose',
+-					 @{ $delta_comp_info{$comp}{'DebugRpms'}});
++		if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++			dpkg_uninstall_list2("any", " --nodeps ", 'verbose',
++								@{ $delta_comp_info{$comp}{'DebugRpms'}});
++		} else {
++			rpm_uninstall_list2("any", " --nodeps ", 'verbose',
++								@{ $delta_comp_info{$comp}{'DebugRpms'}});
++		}
+ 	}
+ 	$ComponentWasInstalled{'delta_debug'}=0;
+ }
+@@ -4449,6 +4676,10 @@
+ 
+ sub installed_ibacm()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return (dpkg_is_installed("ibacm", "user")
++				&& -e "$ROOT$BASE_DIR/version_delta");
++	}
+ 	return (rpm_is_installed("ibacm", "user")
+ 			&& -e "$ROOT$BASE_DIR/version_delta");
+ }
+@@ -4534,6 +4765,9 @@
+ # # -----------------------------------------------------------------
+ sub installed_rdma_ndd()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++		return (dpkg_is_installed("infiniband-diags", "user"));
++	}
+         return (rpm_is_installed("infiniband-diags", "user"));
+ }
+ 
+@@ -4569,6 +4803,10 @@
+ 
+ sub installed_hfi1_uefi()
+ {
++	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
++			return (dpkg_is_installed("hfi1-uefi", "user")
++		&& -e "$ROOT$BASE_DIR/version_delta");
++	}
+ 	return (rpm_is_installed("hfi1-uefi", "user")
+ 		&& -e "$ROOT$BASE_DIR/version_delta");
+ }

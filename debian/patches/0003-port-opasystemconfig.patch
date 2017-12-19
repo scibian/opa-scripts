@@ -1,0 +1,61 @@
+Description: Port opasystemconfig to Debian
+ opasystemconfig, as deivered in RHEL IFS, doesn't work correctly on
+ Debian due to different config paths and some rc-style services.
+ This patch corrects these issues.
+ .
+ opa-scripts (1.1-1-1ifs) UNRELEASED; urgency=medium
+ .
+     * Import opa-scripts 1.1-1 from IFS 10.5.0.0.153 upstream.
+
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Copyright: 2017 System Fabric Works, Inc. All Rights Reserved.
+Forwarded: not-needed
+Last-Update: <2017-08-18>
+
+---
+
+--- a/opasystemconfig
++++ b/opasystemconfig
+@@ -45,8 +45,8 @@
+ SysConfig_Comp[1]="Memory_Limit"
+ SysConfig_Comp[2]="Udev_Access"
+ 
+-IRQFILE=/etc/sysconfig/irqbalance
+-IRQBAKFILE=/etc/sysconfig/irqbalance.bak
++IRQFILE=/etc/default/irqbalance
++IRQBAKFILE=/etc/default/irqbalance.bak
+ IRQCONT="IRQBALANCE_ARGS= --hintpolicy=exact"
+ #Irq_balance
+ function Irq_Balance_SysConfig_Enable(){
+@@ -72,10 +72,10 @@
+ }
+ 
+ function Irq_Balance_SysConfig_Status(){
+-	status=$(systemctl is-enabled irqbalance)
+-        if [ "$status" == "enabled" ]; then
++	status=$(chkconfig irqbalance)
++        if [ "$status" == "irqbalance  on" ]; then
+                 return $ENABLE
+-        elif [ "$status" == "disabled" ]; then
++        elif [ "$status" == "irqbalance  off" ]; then
+                 return $DISABLE
+         else
+                 return $NOT_AVAIL
+@@ -83,7 +83,7 @@
+ }
+ 
+ #Memory Limit
+-APPEND_FILE=/etc/sysconfig/opa/limits.conf
++APPEND_FILE=/etc/opa/limits.conf
+ LIMIT_FILE=/etc/security/limits.conf
+ LIMIT_BAKFILE=/etc/security/limits.conf.bak
+ 
+@@ -113,7 +113,7 @@
+ }
+ 
+ #Udev Access
+-SOURCE_FILE=/etc/sysconfig/opa/udev.rules
++SOURCE_FILE=/etc/opa/udev.rules
+ RULE_FILE=/etc/udev/rules.d/05-opa.rules
+ 
+ function Udev_Access_SysConfig_Enable(){	

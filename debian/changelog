@@ -1,0 +1,42 @@
+opa-scripts (1.1-1-2ifs+c9u1) calibre9; urgency=medium
+
+  * Build for Calibre9
+  * Add a debian/gbp.conf file
+
+ -- Mehdi Dogguy <mehdi.dogguy@edf.fr>  Tue, 19 Dec 2017 17:32:30 +0100
+
+opa-scripts (1.1-1-2ifs) UNRELEASED; urgency=medium
+
+  * Port parts of .comp_ofed_delta required by opaconfig to Debian.
+  * Install etc/modules-load.d/rdma.conf.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 12 Oct 2017 10:05:12 -0500
+
+opa-scripts (1.1-1-1ifs) UNRELEASED; urgency=medium
+
+  * Import opa-scripts 1.1-1 from IFS 10.5.0.0.155 upstream.
+  * Revise maintainer scripts to use dh_helper, check errors,
+    don't use absolute paths.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Tue, 19 Sep 2017 14:55:50 -0500
+
+opa-scripts (1.0-1.0-1ifs) UNRELEASED; urgency=medium
+
+  * Convert to quilt format. Corrected version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 08 Jun 2017 15:11:02 -0500
+
+opa-scripts (1.0.1.0) UNRELEASED; urgency=medium
+
+  * Include release in package version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 05 Jan 2017 21:12:35 -0600
+
+opa-scripts (1.0) UNRELEASED; urgency=medium
+
+  * Initial release.
+  * Import opa-scripts-1.0-1.0 from OPA 10.1.0.0.145.
+    manpage changes
+  * Import opa-scripts-1.0-1.0 from OPA 10.2.0.0.158.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 03 Oct 2016 16:25:35 -0500

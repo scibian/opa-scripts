@@ -1,0 +1,18 @@
+Source: opa-scripts
+Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
+Section: misc
+Priority: extra
+Standards-Version: 3.9.6
+Build-Depends: debhelper (>= 9),
+ dh-systemd
+
+Package: opa-scripts
+Architecture: linux-any
+Depends: ${misc:Depends},
+ opa-basic-tools,
+ irqbalance,
+ systemd
+Description: Omnipath Fabric initialization
+ User space initialization scripts for the Omnipath Fabric
+
+
