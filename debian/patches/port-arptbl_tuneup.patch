@@ -1,19 +1,11 @@
 Description: Port arptbl_tuneup to Debian
  Adjust network configuration path and utility paths in
  arptbl_tuneup so that it will work correctly on Debian.
- .
- opa-scripts (1.1-1-1ifs) UNRELEASED; urgency=medium
- .
-     * Import opa-scripts 1.1-1 from IFS 10.5.0.0.153 upstream.
-
 Author: Brian T. Smith <bsmith@systemfabricworks.com>
-Copyright: 2017 System Fabric Works, Inc. All Rights Reserved.
 Forwarded: not-needed
-Last-Update: <2017-08-18>
-
+Last-Update: <2017-11-20>
 ---
-
-
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/arptbl_tuneup
 +++ b/arptbl_tuneup
 @@ -52,10 +52,16 @@

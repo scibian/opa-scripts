@@ -2,17 +2,17 @@ Source: opa-scripts
 Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
 Section: misc
 Priority: extra
-Standards-Version: 3.9.6
-Build-Depends: debhelper (>= 9),
- dh-systemd
+Standards-Version: 3.9.8
+Homepage: http://www.intel.com
+Build-Depends: debhelper (>= 10),
+               dh-systemd,
 
 Package: opa-scripts
-Architecture: linux-any
-Depends: ${misc:Depends},
- opa-basic-tools,
- irqbalance,
- systemd
+Architecture: all
+Depends: infiniband-diags,
+         irqbalance,
+         opa-basic-tools,
+         systemd,
+         ${misc:Depends},
 Description: Omnipath Fabric initialization
  User space initialization scripts for the Omnipath Fabric
-
-

@@ -1,0 +1,132 @@
+Description: Port comp_ofed_delta.pl to Debian stretch
+ Use components specific to debian 9. Stretch omits gasnet and openshmem.
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Copyright: 2018 System Fabric Works, Inc. All Rights Reserved.
+Forwarded: not-needed
+Last-Update: <2018-02-21>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/.comp_ofed_delta.pl
++++ b/.comp_ofed_delta.pl
+@@ -263,6 +263,21 @@
+ 				"delta_debug",		# must be last real component
+ 	);
+ 
++my @delta_components_debian9 = (
++				"opa_stack", 		# Kernel drivers.
++				"ibacm", 			# OFA IB communication manager assistant.
++				"intel_hfi", 		# HFI drivers
++				"delta_ipoib", 		# ipoib module.
++				"mpi_selector",
++				"mvapich2",
++				"openmpi",
++				"sandiashmem",
++				"opa_stack_dev", 	# dev libraries.
++				"delta_mpisrc", 	# Source bundle for MPIs.
++				"hfi1_uefi",
++				"delta_debug",		# must be last real component
++	);
++
+ my @delta_components_rhel72 = ( @delta_components_other );
+ 
+ my @delta_components_rhel67 = ( @delta_components_other );
+@@ -625,6 +640,18 @@
+ 					},
+ );
+ 
++my %opa_stack_dev_debian9_comp_info = (
++	'opa_stack_dev' => {
++					KernelRpms => [ ],
++					UserRpms =>  [ "ifs-kernel-updates-devel", "ibacm-devel",
++						"libibumad-devel", "libibmad-devel"],
++					DebugRpms =>  [  ],
++					Drivers => "", 	# none
++					StartupScript => "",
++					StartupParams => [ ],
++					},
++);
++
+ my %opa_stack_dev_rhel70_comp_info = (
+         'opa_stack_dev' => {
+                                         KernelRpms => [ "" ],
+@@ -774,6 +801,22 @@
+ 					},
+ );
+ 
++my %opa_stack_debian9_comp_info = (
++	'opa_stack' => {
++					KernelRpms => [ "kmod-ifs-kernel-updates" ], # special case
++					UserRpms =>	  [ "opa-scripts",
++								"srptools",
++								"libibmad", "libibumad", "librdmacm",
++								"infiniband-diags",
++								  ],
++					DebugRpms =>  [ "srptools-debuginfo",
++								  ],
++					Drivers => "",
++					StartupScript => "opa",
++					StartupParams => [ "ARPTABLE_TUNING" ],
++					},
++);
++
+ my %opa_stack_rhel67_comp_info = (
+ 	'opa_stack' => {
+ 					KernelRpms => [ "ifs-kernel-updates" ], # special case
+@@ -926,6 +969,22 @@
+ 	%delta_debug_comp_info,
+ );
+ 
++my %delta_comp_info_debian9 = (
++	%opa_stack_debian8_comp_info,
++	%ibacm_comp_info,
++	%intel_hfi_comp_info,
++	%ib_wfr_lite_comp_info,
++	%delta_ipoib_comp_info,
++	%mpi_selector_comp_info,
++	%mvapich2_comp_info,
++	%openmpi_comp_info,
++	%sandiashmem_comp_info,
++	%opa_stack_dev_debian8_comp_info,
++	%delta_mpisrc_comp_info,
++	%hfi1_uefi_comp_info,
++	%delta_debug_comp_info,
++);
++
+ my %delta_comp_info_rhel67 = (
+ 	%opa_stack_rhel67_comp_info,
+ 	%ibacm_comp_info,
+@@ -1091,6 +1150,7 @@
+ # these are in the order we must build/process them to meet basic dependencies
+ my @delta_kernel_srpms_other = ( 'compat-rdma' );
+ my @delta_kernel_srpms_debian8 = ( 'kmod-ifs-kernel-updates' );
++my @delta_kernel_srpms_debian9 = ( 'kmod-ifs-kernel-updates' );
+ my @delta_kernel_srpms_rhel72 = ( 'kmod-ifs-kernel-updates' );
+ my @delta_kernel_srpms_rhel70 = ( 'compat-rdma' );
+ my @delta_kernel_srpms_rhel67 = ( 'ifs-kernel-updates' );
+@@ -1115,6 +1175,13 @@
+  		"mvapich2", "openmpi","gasnet", "openshmem", "openshmem-test-suite",
+ 	    "shmem-benchmarks", "srptools", "libibumad", "libibmad", "infiniband-diags", "hfi1_uefi", "libfabric", "sandiashmem"
+ );
++my @delta_user_srpms_debian9 = (
++		"opa-scripts", "mpi-selector", "ibacm",
++		"libhfi1", "libpsm2", "hfi1-diagtools-sw", "hfidiags", "hfi1-firmware", "hfi1-firmware_debug",
++ 		"mvapich2", "openmpi",
++	    "srptools", "libibumad", "libibmad", "infiniband-diags", "hfi1_uefi", "libfabric", "sandiashmem"
++);
++
+ my @delta_user_srpms_rhel67 = (
+ 		"opa-scripts", "libibumad", "ibacm", "mpi-selector",
+ 		"libhfi1", "libpsm2", "hfi1-diagtools-sw", "hfidiags", "hfi1-firmware", "hfi1-firmware_debug",
+@@ -1437,6 +1504,12 @@
+ 		%delta_comp_info = ( %delta_comp_info_debian8 );
+ 		@delta_kernel_srpms = ( @delta_kernel_srpms_debian8 );
+ 		@delta_user_srpms = ( @delta_user_srpms_debian8 );
++	 } elsif ( "$CUR_DISTRO_VENDOR" eq 'debian'
++		  && "$CUR_VENDOR_VER" eq 'ES9' ) {
++		@delta_components = ( @delta_components_debian9 );
++		%delta_comp_info = ( %delta_comp_info_debian9 );
++		@delta_kernel_srpms = ( @delta_kernel_srpms_debian9 );
++		@delta_user_srpms = ( @delta_user_srpms_debian9 );
+ 	} elsif ("$CUR_DISTRO_VENDOR" eq 'SuSE'
+ 		&& ("$CUR_VENDOR_VER" eq 'ES12' || "$CUR_VENDOR_VER" eq 'ES121')) {
+ 		@delta_components = ( @delta_components_sles );

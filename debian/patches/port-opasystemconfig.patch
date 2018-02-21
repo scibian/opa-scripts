@@ -1,0 +1,78 @@
+Description: Port opasystemconfig to Debian
+ opasystemconfig, as deivered in RHEL IFS, doesn't work correctly on
+ Debian due to different config paths and some rc-style services.
+ This patch corrects these issues.
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Forwarded: not-needed
+Last-Update: <2017-11-20>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/opasystemconfig
++++ b/opasystemconfig
+@@ -45,8 +45,13 @@
+ SysConfig_Comp[1]="Memory_Limit"
+ SysConfig_Comp[2]="Udev_Access"
+ 
++if [ -f /etc/debian_version ] ; then
++IRQFILE=/etc/default/irqbalance
++IRQBAKFILE=/etc/default/irqbalance.bak
++else
+ IRQFILE=/etc/sysconfig/irqbalance
+ IRQBAKFILE=/etc/sysconfig/irqbalance.bak
++fi
+ IRQ_ARGS_VALUE="hintpolicy=exact"
+ #Irq_balance
+ function Irq_Balance_SysConfig_Enable(){
+@@ -107,19 +112,28 @@
+ function Irq_Balance_SysConfig_Status(){
+ 	# Check for systemd vs upstart
+ 	local start_system=$(ps -o comm= 1)
++	local systemctl_failed=0
+ 	if [ "${start_system}" = "systemd" ]; then
+-		local status=$(systemctl is-enabled irqbalance)
+-	elif [ "${start_system}" = "init" ]; then
++		local status=$(systemctl is-enabled irqbalance 2>&1)
++		if [ "Failed" = $(echo $status | sed 's/^\([^ ]*\).*/\1/') ] ; then
++			systemctl_failed=1
++		fi
++	fi
++	if [ $systemctl_failed -eq 1 -o "${start_system}" = "init" ]; then
+ 		local service_output=$(service irqbalance 2>&1)
+ 		if $(echo ${service_output} | grep -q 'unrecognized service'); then
+ 			local status="notfound"
+ 		else
+-			chkconfig irqbalance
++			local status=$(chkconfig irqbalance 2>&1)
+ 			local status_rc=$?
+ 			if [ $status_rc -eq 0 ];then
+-				local status="enabled"
+-			elif [ $status_rc -eq 1 ]; then
+-				local status="disabled"
++				if $(echo ${status} | grep -q ' on$'); then
++					status="enabled"
++				elif $(echo ${status} | grep -q ' off$'); then
++					status="disabled"
++				fi
++			else
++				status = "error"
+ 			fi
+ 		fi
+ 	else
+@@ -137,7 +151,7 @@
+ }
+ 
+ #Memory Limit
+-APPEND_FILE=/etc/sysconfig/opa/limits.conf
++APPEND_FILE=/etc/opa/limits.conf
+ LIMIT_FILE=/etc/security/limits.conf
+ LIMIT_BAKFILE=/etc/security/limits.conf.bak
+ 
+@@ -167,7 +181,7 @@
+ }
+ 
+ #Udev Access
+-SOURCE_FILE=/etc/sysconfig/opa/udev.rules
++SOURCE_FILE=/etc/opa/udev.rules
+ RULE_FILE=/etc/udev/rules.d/05-opa.rules
+ 
+ function Udev_Access_SysConfig_Enable(){	

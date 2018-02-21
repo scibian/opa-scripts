@@ -3,18 +3,11 @@ Description: Port opa service to Debian
  .
  Modifies opad.sbin to wait until HCA ports are available. Corrects
  use of missing usleep utility. Launch rdma-ndd service.
- .
- opa-scripts (1.1-1-1ifs) UNRELEASED; urgency=medium
- .
-     * Import opa-scripts 1.1-1 from IFS 10.5.0.0.153 upstream.
-
 Author: Brian T. Smith <bsmith@systemfabricworks.com>
-Copyright: 2017 System Fabric Works, Inc. All Rights Reserved.
 Forwarded: not-needed
-Last-Update: <2017-08-18>
-
+Last-Update: <2017-11-20>
 ---
-
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/opa.service
 +++ b/opa.service
 @@ -31,12 +31,13 @@

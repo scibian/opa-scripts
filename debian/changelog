@@ -1,9 +1,24 @@
-opa-scripts (1.1-1-2ifs+c9u1) calibre9; urgency=medium
+opa-scripts (1.1-1-4ifs+deb9) UNRELEASED; urgency=medium
 
-  * Build for Calibre9
-  * Add a debian/gbp.conf file
+  * Branch for stretch.
+  * Add rdma-ndd.service. It's not in stretch infiniband-diags.
+  * Don't remove config directories when uninstalling opa stack.
+  * Correct network configuration location.
+  * Correct detection of openmpi-gcc.
+  * Remove qperf when OPA Stack is uninstalled.
 
- -- Mehdi Dogguy <mehdi.dogguy@edf.fr>  Tue, 19 Dec 2017 17:32:30 +0100
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 21 Feb 2018 14:12:52 -0600
+
+opa-scripts (1.1-1-3ifs) UNRELEASED; urgency=medium
+
+  * Use git packaging and pristine-source.
+  * Modify port of opasystemconfig to correctly work with init-managed
+    irqbalance when systemd is also running,
+  * Add chkconfig dependency.
+  * Change architecture to all.
+  * Refresh patches and modify to address porting issues in latest version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 20 Oct 2017 17:28:21 -0600
 
 opa-scripts (1.1-1-2ifs) UNRELEASED; urgency=medium
 
