@@ -47,32 +47,86 @@ SysConfig_Comp[2]="Udev_Access"
 
 IRQFILE=/etc/sysconfig/irqbalance
 IRQBAKFILE=/etc/sysconfig/irqbalance.bak
-IRQCONT="IRQBALANCE_ARGS= --hintpolicy=exact"
+IRQ_ARGS_VALUE="hintpolicy=exact"
 #Irq_balance
 function Irq_Balance_SysConfig_Enable(){
-	CHECK1=$(egrep -e '^IRQBALANCE_ARGS=' $IRQFILE)
-	CHECK2=$(echo $CHECK1 | grep "hintpolicy=exact")
-	CHECK3=$(echo $CHECK1 | grep "h exact")
+	# Grep file to see if IRQBALANCE_ARGS is set
+	local irq_current_line=$(egrep "^IRQBALANCE_ARGS=" $IRQFILE)
 
-	if [ "$CHECK1" == "" ]; then 
+	# If argument is not found, just append it to the file
+	if [ -z "${irq_current_line}" ]; then
 		cat $IRQFILE > $IRQBAKFILE
-		echo $IRQCONT >> $IRQFILE #if no IRQ args exist at all
-	elif [[ ("$CHECK2" == "") && ("$CHECK3" == "") ]]; then
+		echo "IRQBALANCE_ARGS=\"--$IRQ_ARGS_VALUE\"" >> $IRQFILE
+
+	# If argument is found, we must parse it to see if hintpolicy=exact is already set.
+	# We must also preserve the currently set arguments, so that we can prepend the hintpolicy to them in our 'sed' command
+	else
+		local irq_current_value=$(echo ${irq_current_line} | cut -d= -f2-)
+
+		if $(echo ${irq_current_value} | grep -q "$IRQ_ARGS_VALUE") || $(echo ${irq_current_value} | grep -q 'h exact'); then
+			echo "$IRQ_ARGS_VALUE already set"
+		elif $(echo ${irq_current_value} | grep -q \"); then            # SLES Default. The args are set to an empty string: IRQBALANCE_ARGS=""
+			local irq_current_value_in_quotes=$(echo ${irq_current_value} | tr -d \")
+			[ -n "${irq_current_value_in_quotes}" ] && irq_current_value_in_quotes=" ${irq_current_value_in_quotes}" # If the value is not empty, we will add a space to separate it from the hintpolicy.
+			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE}${irq_current_value_in_quotes}\"/g"
+		else                                                            # RHEL Default. The args are commented out: #IRQBALANCE_ARGS=
+			[ -n "${irq_current_value}" ] && irq_current_value=" ${irq_current_value}" # If the value is not empty, we will add a space to separate it from the hintpolicy.
+			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE}${irq_current_value}\"/g"
+		fi
+
 		cat $IRQFILE > $IRQBAKFILE
-		sed -i -- 's/[^ ]IRQBALANCE_ARGS*/SRP_LOAD=yes/g' $IRQFILE #appending arg to existing IRQ args
-		echo "$CHECK1 --hintpolicy=exact"	
+		[ -n "$sed_command" ] && sed -i "$sed_command" $IRQFILE
 	fi
-	systemctl enable irqbalance
-	systemctl restart irqbalance
+
+	# Check for systemd vs upstart
+	local start_system=$(ps -o comm= 1)
+	if [ "${start_system}" = "systemd" ]; then
+		systemctl enable irqbalance
+		systemctl restart irqbalance
+	elif [ "${start_system}" = "init" ]; then
+		chkconfig irqbalance on
+		service irqbalance restart
+	else
+		echo "irqbalance was not started. Please start it manually."
+	fi
 }
 
 function Irq_Balance_SysConfig_Disable(){
 	cat $IRQBAKFILE > $IRQFILE
-	systemctl disable irqbalance
+	# Check for systemd vs upstart
+	local start_system=$(ps -o comm= 1)
+	if [ "${start_system}" = "systemd" ]; then
+		systemctl disable irqbalance
+	elif [ "${start_system}" = "init" ]; then
+		chkconfig irqbalance off
+	else
+		echo "irqbalance was not disabled. Please disable it manually."
+	fi
 }
 
 function Irq_Balance_SysConfig_Status(){
-	status=$(systemctl is-enabled irqbalance)
+	# Check for systemd vs upstart
+	local start_system=$(ps -o comm= 1)
+	if [ "${start_system}" = "systemd" ]; then
+		local status=$(systemctl is-enabled irqbalance)
+	elif [ "${start_system}" = "init" ]; then
+		local service_output=$(service irqbalance 2>&1)
+		if $(echo ${service_output} | grep -q 'unrecognized service'); then
+			local status="notfound"
+		else
+			chkconfig irqbalance
+			local status_rc=$?
+			if [ $status_rc -eq 0 ];then
+				local status="enabled"
+			elif [ $status_rc -eq 1 ]; then
+				local status="disabled"
+			fi
+		fi
+	else
+		echo "start system cannot be queried."
+	fi
+
+        # Check for status
         if [ "$status" == "enabled" ]; then
                 return $ENABLE
         elif [ "$status" == "disabled" ]; then
