@@ -1,0 +1,273 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+#
+# Copyright (c) 2017, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# END_ICS_COPYRIGHT8   ****************************************
+
+# The script helps to configure system settings
+#
+# Each configuration option has three functions
+# 1) Config_Enable
+# 2) Config_Disable
+# 3) Config_Status
+# The naming convention for any system setting should be
+# Utility_SysConfig_
+
+ENABLE=0
+DISABLE=1
+NOT_AVAIL=2
+
+SysConfig_Comp[0]="Irq_Balance"
+SysConfig_Comp[1]="Memory_Limit"
+SysConfig_Comp[2]="Udev_Access"
+
+IRQFILE=/etc/sysconfig/irqbalance
+IRQBAKFILE=/etc/sysconfig/irqbalance.bak
+IRQCONT="IRQBALANCE_ARGS= --hintpolicy=exact"
+#Irq_balance
+function Irq_Balance_SysConfig_Enable(){
+	CHECK1=$(egrep -e '^IRQBALANCE_ARGS=' $IRQFILE)
+	CHECK2=$(echo $CHECK1 | grep "hintpolicy=exact")
+	CHECK3=$(echo $CHECK1 | grep "h exact")
+
+	if [ "$CHECK1" == "" ]; then 
+		cat $IRQFILE > $IRQBAKFILE
+		echo $IRQCONT >> $IRQFILE #if no IRQ args exist at all
+	elif [[ ("$CHECK2" == "") && ("$CHECK3" == "") ]]; then
+		cat $IRQFILE > $IRQBAKFILE
+		sed -i -- 's/[^ ]IRQBALANCE_ARGS*/SRP_LOAD=yes/g' $IRQFILE #appending arg to existing IRQ args
+		echo "$CHECK1 --hintpolicy=exact"	
+	fi
+	systemctl enable irqbalance
+	systemctl restart irqbalance
+}
+
+function Irq_Balance_SysConfig_Disable(){
+	cat $IRQBAKFILE > $IRQFILE
+	systemctl disable irqbalance
+}
+
+function Irq_Balance_SysConfig_Status(){
+	status=$(systemctl is-enabled irqbalance)
+        if [ "$status" == "enabled" ]; then
+                return $ENABLE
+        elif [ "$status" == "disabled" ]; then
+                return $DISABLE
+        else
+                return $NOT_AVAIL
+        fi
+}
+
+#Memory Limit
+APPEND_FILE=/etc/sysconfig/opa/limits.conf
+LIMIT_FILE=/etc/security/limits.conf
+LIMIT_BAKFILE=/etc/security/limits.conf.bak
+
+function Memory_Limit_SysConfig_Enable(){
+	Memory_Limit_SysConfig_Status
+        retval=$?
+        if [ "$retval" = "1" ]; then
+		cat $LIMIT_FILE > $LIMIT_BAKFILE
+		cat $APPEND_FILE >> $LIMIT_FILE	
+        fi
+
+}
+
+function Memory_Limit_SysConfig_Disable(){
+	cat $LIMIT_BAKFILE > $LIMIT_FILE
+}
+
+function Memory_Limit_SysConfig_Status(){
+	CHECK1=$(sed -n '/hard memlock unlimited/'p $LIMIT_FILE)
+	CHECK2=$(sed -n '/soft memlock unlimited/'p $LIMIT_FILE)
+	if [[ ("$CHECK1" == "") || ("$CHECK2" == "") ]]; then
+		return $DISABLE
+	else
+		return $ENABLE
+	fi
+		
+}
+
+#Udev Access
+SOURCE_FILE=/etc/sysconfig/opa/udev.rules
+RULE_FILE=/etc/udev/rules.d/05-opa.rules
+
+function Udev_Access_SysConfig_Enable(){	
+	Udev_Access_SysConfig_Status
+	retval=$?
+	if [ "$retval" = "1" ]; then
+		touch $RULE_FILE
+		cat $SOURCE_FILE >> $RULE_FILE
+		chown root $RULE_FILE
+		chgrp root $RULE_FILE	
+		chmod 0644 $RULE_FILE
+	fi
+}
+
+function Udev_Access_SysConfig_Disable(){
+	rm -f $RULE_FILE
+}
+
+function Udev_Access_SysConfig_Status(){
+        if [ -e $RULE_FILE ]; then
+                return $ENABLE
+        else
+                return $DISABLE
+        fi
+}
+
+function comp_status(){
+	comp_name=$1
+        comp_num=${#SysConfig_Comp[@]}
+        for ((i = 0; i < comp_num; i++))
+        do
+                if [ "${SysConfig_Comp[i]}" == "$comp_name" ]; then
+                        ${SysConfig_Comp[i]}_SysConfig_Status
+			retval=$?
+                        break
+                fi
+        done
+        if [ "$i" == "$comp_num" ]; then
+                echo $comp_name":" No such Component
+        fi
+	
+	return ${retval}
+}
+
+function comp_enable(){
+	comp_name=$1
+        comp_num=${#SysConfig_Comp[@]}
+        for ((i = 0; i < comp_num; i++))
+        do
+                if [ "${SysConfig_Comp[i]}" == "$comp_name" ]; then
+                        ${SysConfig_Comp[i]}_SysConfig_Enable
+                        break
+                fi
+        done
+        if [ "$i" == "$comp_num" ]; then
+                echo $comp_name":" No such Component
+        fi
+}
+
+function comp_disable(){
+	comp_name=$1
+        comp_num=${#SysConfig_Comp[@]}
+        for ((i = 0; i < comp_num; i++))
+        do
+                if [ "${SysConfig_Comp[i]}" == "$comp_name" ]; then
+                        ${SysConfig_Comp[i]}_SysConfig_Disable
+                        break
+                fi
+        done
+        if [ "$i" == "$comp_num" ]; then
+                echo $comp_name":" No such Component
+        fi
+}
+
+function list_settings(){
+        echo "Available Settings"
+        comp_num=${#SysConfig_Comp[@]}
+        for ((i = 0; i < comp_num; i++))
+        do
+		comp_status ${SysConfig_Comp[i]}
+		retval=$?
+		if [ "$retval" == "0" ]; then
+			echo "-->" ${SysConfig_Comp[i]} "[ENABLED]"
+		elif [ "$retval" == "1" ]; then
+			echo "-->" ${SysConfig_Comp[i]} "[DISABLED]"
+		fi
+        done
+}
+
+
+
+function usage(){
+        help
+}
+
+function help(){
+	TEST=avda
+        echo "Usage:	opasystemconfig --[Action] [Utility]"
+        echo "          or"
+        echo "	opasystemconfig --help"
+        echo "  --help - produce full help text" 
+        echo "  --status - shows status of setting"
+        echo "  --enable - enables the setting"
+        echo "  --disable - disables the setting"
+        echo "  --list - lists all available utilities"
+}
+
+
+#########################################################
+####   OPA System Settings Script
+#########################################################
+
+if [ "$(id -u)" != "0" ]; then
+        echo "The script must be run as root"
+        exit 0
+fi
+
+Arguments=$@
+declare -a Arg_Array=(${Arguments})
+arg_num=${#Arg_Array[@]}
+
+if [ "${Arg_Array[0]}" == "--status" ]; then
+        for ((j = 1; j < arg_num; j++))
+        do
+                comp_status ${Arg_Array[j]}
+                retval=$?
+                if [ "$retval" == "0" ]; then
+                        echo ${Arg_Array[j]} [ENABLED]
+                elif [ "$retval" == "1" ]; then
+                        echo ${Arg_Array[j]} [DISABLED]
+                else
+                        echo ${Arg_Array[j]} [NOT INSTALLED]
+                fi
+        done
+
+elif [ "${Arg_Array[0]}" == "--enable" ]; then
+        for ((j = 1; j < arg_num; j++))
+        do
+                comp_enable ${Arg_Array[j]}
+        done
+
+elif [ "${Arg_Array[0]}" == "--disable" ]; then
+        for ((j = 1; j < arg_num; j++))
+        do
+                comp_disable ${Arg_Array[j]}
+        done
+
+elif [ "${Arg_Array[0]}" == "--list" ]; then
+        list_settings
+
+elif [ "${Arg_Array[0]}" == "--help" ]; then
+        help
+else
+        usage
+fi
+
+echo $TEST
