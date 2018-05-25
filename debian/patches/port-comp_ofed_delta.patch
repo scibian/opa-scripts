@@ -1,15 +1,16 @@
 Description: Port functionality of comp script needed by opaconfig
  opaconfig allows a package to override certain funcionality. This
  patch ports the required functionality of .comp_ofed_delta to Debian.
- Omit config directory deletion in uninstall_opa_stack, let dpkg manage it.
+ Correct detection of openmpi-gcc.
+ 
 Author: Brian T. Smith <bsmith@systemfabricworks.com>
 Forwarded: not-needed
-Last-Update: <2018-02-21>
+Last-Update: <2018-07-09>
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/.comp_ofed_delta.pl
 +++ b/.comp_ofed_delta.pl
-@@ -246,6 +246,23 @@
+@@ -225,6 +225,18 @@
  				"delta_debug",		# must be last real component
  );
  
@@ -19,21 +20,16 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +				"intel_hfi", 		# HFI drivers
 +				"delta_ipoib", 		# ipoib module.
 +				"mpi_selector",
-+				"mvapich2",
-+				"openmpi",
-+				"gasnet",
-+				"openshmem",
 +				"sandiashmem",
 +				"opa_stack_dev", 	# dev libraries.
-+				"delta_mpisrc", 	# Source bundle for MPIs.
-+				"hfi1_uefi",
++				"mpiRest",			# PGI, Intel mpi variants.
 +				"delta_debug",		# must be last real component
 +	);
 +
  my @delta_components_rhel72 = ( @delta_components_other );
  
  my @delta_components_rhel67 = ( @delta_components_other );
-@@ -596,6 +613,18 @@
+@@ -496,6 +508,18 @@
  					},
  );
  
@@ -52,7 +48,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  my %opa_stack_dev_rhel70_comp_info = (
          'opa_stack_dev' => {
                                          KernelRpms => [ "" ],
-@@ -729,6 +758,22 @@
+@@ -608,6 +632,22 @@
  					},
  );
  
@@ -75,7 +71,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  my %opa_stack_rhel67_comp_info = (
  	'opa_stack' => {
  					KernelRpms => [ "ifs-kernel-updates" ], # special case
-@@ -863,6 +908,24 @@
+@@ -736,6 +776,20 @@
  	%delta_debug_comp_info,
  );
  
@@ -86,21 +82,17 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +	%ib_wfr_lite_comp_info,
 +	%delta_ipoib_comp_info,
 +	%mpi_selector_comp_info,
-+	%mvapich2_comp_info,
-+	%openmpi_comp_info,
-+	%gasnet_comp_info,
-+	%openshmem_comp_info,
 +	%sandiashmem_comp_info,
 +	%opa_stack_dev_debian8_comp_info,
++	%mpiRest_comp_info,
 +	%delta_mpisrc_comp_info,
-+	%hfi1_uefi_comp_info,
 +	%delta_debug_comp_info,
 +);
 +
  my %delta_comp_info_rhel67 = (
  	%opa_stack_rhel67_comp_info,
  	%ibacm_comp_info,
-@@ -1027,6 +1090,7 @@
+@@ -853,6 +907,7 @@
  # all kernel srpms
  # these are in the order we must build/process them to meet basic dependencies
  my @delta_kernel_srpms_other = ( 'compat-rdma' );
@@ -108,20 +100,20 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  my @delta_kernel_srpms_rhel72 = ( 'kmod-ifs-kernel-updates' );
  my @delta_kernel_srpms_rhel70 = ( 'compat-rdma' );
  my @delta_kernel_srpms_rhel67 = ( 'ifs-kernel-updates' );
-@@ -1045,6 +1109,12 @@
-  		"mvapich2", "openmpi", "gasnet", "openshmem", "openshmem-test-suite",
- 		"shmem-benchmarks", "srptools", "libibmad", "infiniband-diags", "hfi1_uefi", "libfabric", "sandiashmem"
+@@ -870,6 +925,12 @@
+ 		"libhfi1", "libpsm2", "hfi1-diagtools-sw", "hfidiags", "hfi1-firmware", "hfi1-firmware_debug",
+ 		"srptools", "libibmad", "infiniband-diags", "libfabric", "sandiashmem"
  );
 +my @delta_user_srpms_debian8 = (
 +		"opa-scripts", "mpi-selector", "ibacm",
 +		"libhfi1", "libpsm2", "hfi1-diagtools-sw", "hfidiags", "hfi1-firmware", "hfi1-firmware_debug",
-+ 		"mvapich2", "openmpi","gasnet", "openshmem", "openshmem-test-suite",
-+	    "shmem-benchmarks", "srptools", "libibumad", "libibmad", "infiniband-diags", "hfi1_uefi", "libfabric", "sandiashmem"
++ 		"mvapich2", "openmpi",
++	    "srptools", "libibumad", "libibmad", "infiniband-diags", "libfabric", "sandiashmem"
 +);
  my @delta_user_srpms_rhel67 = (
  		"opa-scripts", "libibumad", "ibacm", "mpi-selector",
  		"libhfi1", "libpsm2", "hfi1-diagtools-sw", "hfidiags", "hfi1-firmware", "hfi1-firmware_debug",
-@@ -1361,7 +1431,13 @@
+@@ -1101,7 +1162,13 @@
  	%delta_rpm_info = ();	# start fresh
  
  	# filter components by distro
@@ -136,7 +128,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  		&& ("$CUR_VENDOR_VER" eq 'ES12' || "$CUR_VENDOR_VER" eq 'ES121')) {
  		@delta_components = ( @delta_components_sles );
  		%delta_comp_info = ( %delta_comp_info_sles );
-@@ -1710,6 +1786,56 @@
+@@ -1425,6 +1492,56 @@
  	}
  }
  
@@ -193,32 +185,16 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  
  # resolve filename within $srcdir/$SRPMS_SUBDIR
  # and return filename relative to $srcdir
-@@ -2769,6 +2895,24 @@
- 				 	$verbosity, @{ $delta_comp_info{$comp}{'KernelRpms'}});
- }
+@@ -2240,7 +2357,7 @@
  
-+# uninstall all debs associated with an OFED Delta component
-+sub uninstall_delta_comp_debs($$$$)
-+{
-+	my $comp = shift();
-+	my $install_list = shift();
-+	my $uninstalling_list = shift();
-+	my $verbosity = shift();
-+
-+	# debuginfo never in >1 component, so do explicit uninstall since
-+	# have an odd PartOf relationship which confuses uninstall_not_needed_list
-+	dpkg_uninstall_list2("any", " --force-depends ",
-+						 @{ $delta_comp_info{$comp}{'DebugRpms'}});
-+	delta_deb_uninstall_not_needed_list($install_list, $uninstalling_list, $comp,
-+				 	$verbosity, @{ $delta_comp_info{$comp}{'UserRpms'}});
-+	delta_deb_uninstall_not_needed_list($install_list, $uninstalling_list, $comp,
-+				 	$verbosity, @{ $delta_comp_info{$comp}{'KernelRpms'}});
-+}
-+
- # helper which does most of the work for uninstalling rpms and drivers
- # for an OFED component
- # caller must handle any non-RPM files
-@@ -2779,7 +2923,11 @@
+ 	# debuginfo never in >1 component, so do explicit uninstall since
+ 	# have an odd PartOf relationship which confuses uninstall_not_needed_list
+-	rpm_uninstall_list2("any", " --nodeps ", $verbosity,
++	rpm_uninstall_list2("any", " --force-depends",
+ 					 @{ $delta_comp_info{$comp}{'DebugRpms'}});
+ 	delta_rpm_uninstall_not_needed_list($install_list, $uninstalling_list, $comp,
+ 				 	$verbosity, @{ $delta_comp_info{$comp}{'UserRpms'}});
+@@ -2258,7 +2375,11 @@
  	my $uninstalling_list = shift();
  	my $verbosity = shift();
  
@@ -231,7 +207,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  	remove_delta_kernel_ib_drivers($comp, $verbosity);
  }
  
-@@ -2882,7 +3030,10 @@
+@@ -2350,7 +2471,10 @@
  sub installed_delta_opa_stack()
  {
  	my $driver_subdir=$ComponentInfo{'opa_stack'}{'DriverSubdir'};
@@ -240,30 +216,10 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +		return ( -e "$ROOT$BASE_DIR/version_delta"
 +				&& dpkg_is_installed("kmod-ifs-kernel-updates", $CUR_OS_VER));
 +	} elsif ( "$CUR_VENDOR_VER" eq "ES67" ) {
- 		return ( -e "$ROOT$BASE_DIR/version_delta" 
+ 		return ( has_version_delta()
  				&& rpm_is_installed("libibumad", "user")
  				&& rpm_is_installed("ifs-kernel-updates", $CUR_OS_VER));
-@@ -3109,18 +3260,9 @@
- 	#remove_blacklist("ib_ipath");
- 
- 	uninstall_delta_comp('opa_stack', $install_list, $uninstalling_list, 'verbose');
--	remove_driver_dirs($driver_subdir);
--	#remove_modules_conf;
--	remove_limits_conf;
--
-+	dpkg_uninstall('qperf', "any", " --nodeps ", 'verbose');
- 	remove_udev_permissions;
- 
--	system("rm -rf $ROOT$BASE_DIR/version_delta");
--	system("rm -rf $ROOT/usr/lib/opa/.comp_delta.pl");
--	system "rmdir $ROOT/usr/lib/opa 2>/dev/null";	# remove only if empty
--	system "rmdir $ROOT$BASE_DIR 2>/dev/null";	# remove only if empty
--	system "rmdir $ROOT$OPA_CONFIG_DIR 2>/dev/null";	# remove only if empty
--
- 	need_reboot();
- 	$ComponentWasInstalled{'opa_stack'}=0;
- }
-@@ -3163,7 +3305,11 @@
+@@ -2629,7 +2753,11 @@
  sub installed_intel_hfi()
  {
      my $driver_subdir=$ComponentInfo{'intel_hfi'}{'DriverSubdir'};
@@ -273,40 +229,10 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +				&& dpkg_is_installed("libhfi1", "user")
 +				&& dpkg_is_installed("kmod-ifs-kernel-updates", $CUR_OS_VER));
 +    } elsif ( "$CUR_VENDOR_VER" eq "ES67" ) {
- 	return ( -e "$ROOT$BASE_DIR/version_delta"
+ 	return ( has_version_delta()
  			&& rpm_is_installed("libhfi1", "user")
                          && rpm_is_installed("ifs-kernel-updates", $CUR_OS_VER));
-@@ -3823,7 +3969,7 @@
- 
- sub installed_openmpi()
- {
--	return ((rpm_is_installed("openmpi_gcc_hfi", "user")
-+	return ((rpm_is_installed("openmpi_gcc", "user")
- 			&& -e "$ROOT$BASE_DIR/version_delta"));
- }
- 
-@@ -4219,11 +4365,20 @@
- # check file_glob("$srcdir/SRPMS/mvapich-*.src.rpm") ne ""
- # check file_glob("$srcdir/SRPMS/mvapich2-*.src.rpm") ne ""
- # check file_glob("$srcdir/SRPMS/openmpi-*.src.rpm") ne ""
-+	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
-+		return ( (-d "$srcdir" ) );
-+	}
- 	return ( (-d "$srcdir/SRPMS" || -d "$srcdir/RPMS" ) );
- }
- 
- sub installed_delta_mpisrc()
- {
-+	if ("$CUR_DISTRO_VENDOR" eq 'debian') {
-+		return ((-e "$ROOT$BASE_DIR/version_delta"
-+				 && file_glob("$ROOT/usr/src/opa/MPI/mvapich*.dsc") ne ""
-+				 && file_glob("$ROOT/usr/src/opa/MPI/openmpi*.dsc") ne ""
-+				 && file_glob("$ROOT/usr/src/opa/MPI/mpitests*.dsc") ne ""));
-+	}
- 	return ((-e "$ROOT$BASE_DIR/version_delta"
- 			&& file_glob("$ROOT/usr/src/opa/MPI/mvapich*.src.rpm") ne ""
- 			&& file_glob("$ROOT/usr/src/opa/MPI/openmpi*.src.rpm") ne ""
-@@ -4360,6 +4515,10 @@
+@@ -3302,6 +3430,10 @@
  
  sub installed_delta_debug()
  {
@@ -315,5 +241,5 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +				&& -e "$ROOT$BASE_DIR/version_delta");
 +	}
  	return (rpm_is_installed("libibumad-debuginfo", "user")
- 			&& -e "$ROOT$BASE_DIR/version_delta");
+ 			&& has_version_delta());
  }

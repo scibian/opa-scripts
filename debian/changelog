@@ -1,3 +1,11 @@
+opa-scripts (1.1-1-1-1ifs+deb9) UNRELEASED; urgency=medium
+
+  * Import opa-scripts 1.1-1 from IFS RHEL74 10.7.0.0.145 upstream.
+    Upstream version is still 1.1-1, but the code has changed. Add -1
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 24 May 2018 19:25:29 -0500
+
 opa-scripts (1.1-1-4ifs+deb9) UNRELEASED; urgency=medium
 
   * Branch for stretch.
@@ -18,7 +26,7 @@ opa-scripts (1.1-1-3ifs) UNRELEASED; urgency=medium
   * Change architecture to all.
   * Refresh patches and modify to address porting issues in latest version.
 
- -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 20 Oct 2017 17:28:21 -0600
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 20 Oct 2017 17:28:21 -0500
 
 opa-scripts (1.1-1-2ifs) UNRELEASED; urgency=medium
 

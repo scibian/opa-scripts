@@ -4,14 +4,14 @@ Description: Port opasystemconfig to Debian
  This patch corrects these issues.
 Author: Brian T. Smith <bsmith@systemfabricworks.com>
 Forwarded: not-needed
-Last-Update: <2017-11-20>
+Last-Update: <2018-07-02>
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/opasystemconfig
 +++ b/opasystemconfig
-@@ -45,8 +45,13 @@
- SysConfig_Comp[1]="Memory_Limit"
- SysConfig_Comp[2]="Udev_Access"
+@@ -58,8 +58,13 @@
+ 		fi
+ }
  
 +if [ -f /etc/debian_version ] ; then
 +IRQFILE=/etc/default/irqbalance
@@ -23,21 +23,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  IRQ_ARGS_VALUE="hintpolicy=exact"
  #Irq_balance
  function Irq_Balance_SysConfig_Enable(){
-@@ -107,19 +112,28 @@
- function Irq_Balance_SysConfig_Status(){
- 	# Check for systemd vs upstart
- 	local start_system=$(ps -o comm= 1)
-+	local systemctl_failed=0
- 	if [ "${start_system}" = "systemd" ]; then
--		local status=$(systemctl is-enabled irqbalance)
--	elif [ "${start_system}" = "init" ]; then
-+		local status=$(systemctl is-enabled irqbalance 2>&1)
-+		if [ "Failed" = $(echo $status | sed 's/^\([^ ]*\).*/\1/') ] ; then
-+			systemctl_failed=1
-+		fi
-+	fi
-+	if [ $systemctl_failed -eq 1 -o "${start_system}" = "init" ]; then
- 		local service_output=$(service irqbalance 2>&1)
+@@ -127,12 +132,16 @@
  		if $(echo ${service_output} | grep -q 'unrecognized service'); then
  			local status="notfound"
  		else
@@ -58,7 +44,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  			fi
  		fi
  	else
-@@ -137,7 +151,7 @@
+@@ -150,7 +159,7 @@
  }
  
  #Memory Limit
@@ -67,7 +53,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  LIMIT_FILE=/etc/security/limits.conf
  LIMIT_BAKFILE=/etc/security/limits.conf.bak
  
-@@ -167,7 +181,7 @@
+@@ -180,7 +189,7 @@
  }
  
  #Udev Access
