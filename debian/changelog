@@ -1,3 +1,9 @@
+opa-scripts (1.1-1-1-1ifs+deb9sci9+opa10.7u1) scibian9+opa10.7; urgency=medium
+
+  * Scibian9+OPA10.7 Release.
+
+ -- Nicolas Meaux <nicolas-externe.meaux@edf.fr>  Thu, 09 Aug 2018 17:36:45 +0200
+
 opa-scripts (1.1-1-1-1ifs+deb9) UNRELEASED; urgency=medium
 
   * Import opa-scripts 1.1-1 from IFS RHEL74 10.7.0.0.145 upstream.
