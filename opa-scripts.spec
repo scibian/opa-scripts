@@ -1,10 +1,10 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-#
-# Copyright (c) 2015, Intel Corporation
-#
+# 
+# Copyright (c) 2015-2017, Intel Corporation
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-#
+# 
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,7 +24,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# 
 # END_ICS_COPYRIGHT8   ****************************************
 
 #[ICS VERSION STRING: unknown]
@@ -136,6 +136,11 @@ if [ $1 = 1 ]; then
 fi
 %endif
 
+vnic_stat=$(grep '^OPA_VNIC=' /etc/rdma/rdma.conf)
+if [ "$vnic_stat" == "" ]; then
+        echo "OPA_VNIC=no" >>  /etc/rdma/rdma.conf
+fi
+
 # Post-install configuration -- environment variables set by INSTALL script
 # Only 0 or 1 value supported; will use default config if set to anything else
 # Default configuration is performed by else statement for each condition
@@ -165,6 +170,12 @@ if [ “$OPA_INSTALL_CALLER” != “0” ]; then
    /sbin/opasystemconfig --disable Irq_Balance
  else /sbin/opasystemconfig --enable Irq_Balance
  fi
+fi
+
+if [ “$OPA_VNIC” == “0” ]; then
+	/sbin/opaautostartconfig --disable OPA_VNIC
+elif [ “$OPA_VNIC” == “1” ]; then
+	/sbin/opaautostartconfig --enable OPA_VNIC
 fi
 
 %preun
@@ -205,6 +216,7 @@ if [ “$OPA_INSTALL_CALLER” != “0” ]; then
    /sbin/opasystemconfig --disable Irq_Balance
  fi
 fi
+sed -i -- '/^OPA_VNIC=[^ ]*/ d' /etc/rdma/rdma.conf
 
 %postun
 %if 0%{?suse_version} >= 1315
