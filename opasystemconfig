@@ -1,11 +1,11 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-#
-# Copyright (c) 2017, Intel Corporation
-#
+# 
+# Copyright (c) 2015-2017, Intel Corporation
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-#
+# 
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# 
 # END_ICS_COPYRIGHT8   ****************************************
 
 # The script helps to configure system settings
@@ -44,6 +44,19 @@ NOT_AVAIL=2
 SysConfig_Comp[0]="Irq_Balance"
 SysConfig_Comp[1]="Memory_Limit"
 SysConfig_Comp[2]="Udev_Access"
+
+# Find start system in use
+function get_start_system() {
+		if [ -e /proc/1/cmdline ]; then
+			echo $(ps -o comm= 1)
+		elif [ -d /usr/lib/systemd ]; then
+			echo 'systemd'
+		elif [ -d /etc/init.d ]; then
+			echo 'init'
+		else
+			echo ''
+		fi
+}
 
 IRQFILE=/etc/sysconfig/irqbalance
 IRQBAKFILE=/etc/sysconfig/irqbalance.bak
@@ -79,7 +92,7 @@ function Irq_Balance_SysConfig_Enable(){
 	fi
 
 	# Check for systemd vs upstart
-	local start_system=$(ps -o comm= 1)
+	local start_system=$(get_start_system)
 	if [ "${start_system}" = "systemd" ]; then
 		systemctl enable irqbalance
 		systemctl restart irqbalance
@@ -94,7 +107,7 @@ function Irq_Balance_SysConfig_Enable(){
 function Irq_Balance_SysConfig_Disable(){
 	cat $IRQBAKFILE > $IRQFILE
 	# Check for systemd vs upstart
-	local start_system=$(ps -o comm= 1)
+	local start_system=$(get_start_system)
 	if [ "${start_system}" = "systemd" ]; then
 		systemctl disable irqbalance
 	elif [ "${start_system}" = "init" ]; then
@@ -106,7 +119,7 @@ function Irq_Balance_SysConfig_Disable(){
 
 function Irq_Balance_SysConfig_Status(){
 	# Check for systemd vs upstart
-	local start_system=$(ps -o comm= 1)
+	local start_system=$(get_start_system)
 	if [ "${start_system}" = "systemd" ]; then
 		local status=$(systemctl is-enabled irqbalance)
 	elif [ "${start_system}" = "init" ]; then

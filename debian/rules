@@ -1,6 +1,4 @@
 #!/usr/bin/make -f
-#
-
 
 VERSION := $(shell cat version_delta)
 INSTFILES := $(shell find debian/opa-scripts -type f)
@@ -29,8 +27,6 @@ override_dh_auto_install:
 	install -m 0644 debian/conf/etc-rdma-rdma.conf $(DESTDIR)/etc/rdma/rdma.conf
 	install -d -m 0755 $(DESTDIR)/etc/modules-load.d
 	install -m 0644 debian/conf/etc-modules-load-rdma.conf $(DESTDIR)/etc/modules-load.d/rdma.conf
-	install -d -m 0755 $(DESTDIR)/etc/infiniband-diags
-	install -m 0644 debian/conf/etc-infiniband-diags-ibdiag.conf $(DESTDIR)/etc/infiniband-diags/ibdiag.conf
 
 	install -d -m 0755 $(DESTDIR)/sbin
 	install -m 0755 opaautostartconfig $(DESTDIR)/sbin/opaautostartconfig
@@ -42,12 +38,10 @@ override_dh_auto_install:
 	install -m 0644 opaautostartconfig.1 $(DESTDIR)/usr/share/man/man1
 
 	install -d -m 0755 $(DESTDIR)/usr/lib/opa
-	install -m 0755 .comp_ofed_delta.pl $(DESTDIR)/usr/lib/opa
 
 	install -m 0644 version_delta $(DESTDIR)/etc/opa/version_delta
 
-	echo `find debian/opa-scripts -type f -exec sed "s/\(ICS VERSION STRING:\s*\)unknown/\1$(VERSION)/" -i {} \; `
+	echo `find $(DESTDIR) -type f -exec sed "s/\(ICS VERSION STRING:\s*\)unknown/\1$(VERSION)/" -i {} \; `
 
 override_dh_systemd_enable:
 	dh_systemd_enable -popa-scripts --name opa opa.service
-	dh_systemd_enable -popa-scripts --name rdma-ndd rdma-ndd.service

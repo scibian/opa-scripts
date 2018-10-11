@@ -1,21 +1,27 @@
-opa-scripts (1.1-1-4ifs+deb9sci9+opa10.6u1) scibian9+opa10.6; urgency=medium
+opa-scripts (1.1-1-2-1ifs+deb8) jessie; urgency=medium
 
-  * Scibian9+OPA10.6 Release.
+  * Import opa-scripts 1.1-1 from IFS RHEL75 10.8.0.0.204 upstream.
+    Upstream version is still 1.1-1, but the code has changed. Add -2
+    to upstream version.
 
- -- Thomas Hamel <thomas-externe.hamel@edf.fr>  Wed, 18 Apr 2018 18:49:39 +0200
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 10 Oct 2018 20:25:33 -0500
 
-opa-scripts (1.1-1-4ifs+deb9) UNRELEASED; urgency=medium
+opa-scripts (1.1-1-1-1ifs+deb8) jessie; urgency=medium
 
-  * Branch for stretch.
-  * Add rdma-ndd.service. It's not in stretch infiniband-diags.
-  * Don't remove config directories when uninstalling opa stack.
-  * Correct network configuration location.
+  * Import opa-scripts 1.1-1 from IFS RHEL74 10.7.0.0.145 upstream.
+    Upstream version is still 1.1-1, but the code has changed. Add -1
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 24 May 2018 17:23:20 -0500
+
+opa-scripts (1.1-1-4ifs) jessie; urgency=medium
+
+  * Correct uninstallation of packages.
   * Correct detection of openmpi-gcc.
-  * Remove qperf when OPA Stack is uninstalled.
 
- -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 21 Feb 2018 14:12:52 -0600
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 14 May 2018 20:21:42 -0500
 
-opa-scripts (1.1-1-3ifs) UNRELEASED; urgency=medium
+opa-scripts (1.1-1-3ifs) jessie; urgency=medium
 
   * Use git packaging and pristine-source.
   * Modify port of opasystemconfig to correctly work with init-managed
@@ -24,16 +30,16 @@ opa-scripts (1.1-1-3ifs) UNRELEASED; urgency=medium
   * Change architecture to all.
   * Refresh patches and modify to address porting issues in latest version.
 
- -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 20 Oct 2017 17:28:21 -0600
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 20 Oct 2017 17:28:21 -0500
 
-opa-scripts (1.1-1-2ifs) UNRELEASED; urgency=medium
+opa-scripts (1.1-1-2ifs) jessie; urgency=medium
 
   * Port parts of .comp_ofed_delta required by opaconfig to Debian.
   * Install etc/modules-load.d/rdma.conf.
 
  -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 12 Oct 2017 10:05:12 -0500
 
-opa-scripts (1.1-1-1ifs) UNRELEASED; urgency=medium
+opa-scripts (1.1-1-1ifs) jessie; urgency=medium
 
   * Import opa-scripts 1.1-1 from IFS 10.5.0.0.155 upstream.
   * Revise maintainer scripts to use dh_helper, check errors,
@@ -41,19 +47,19 @@ opa-scripts (1.1-1-1ifs) UNRELEASED; urgency=medium
 
  -- Brian T. Smith <bsmith@systemfabricworks.com>  Tue, 19 Sep 2017 14:55:50 -0500
 
-opa-scripts (1.0-1.0-1ifs) UNRELEASED; urgency=medium
+opa-scripts (1.0-1.0-1ifs) jessie; urgency=medium
 
   * Convert to quilt format. Corrected version.
 
  -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 08 Jun 2017 15:11:02 -0500
 
-opa-scripts (1.0.1.0) UNRELEASED; urgency=medium
+opa-scripts (1.0.1.0) jessie; urgency=medium
 
   * Include release in package version.
 
  -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 05 Jan 2017 21:12:35 -0600
 
-opa-scripts (1.0) UNRELEASED; urgency=medium
+opa-scripts (1.0) jessie; urgency=medium
 
   * Initial release.
   * Import opa-scripts-1.0-1.0 from OPA 10.1.0.0.145.
