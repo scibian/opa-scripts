@@ -107,7 +107,6 @@ install -m 0644 opa-init-kernel.1 $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 opaautostartconfig.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
 install -d $RPM_BUILD_ROOT%{_prefix}/lib/opa
-install -m 0755 .comp_ofed_delta.pl $RPM_BUILD_ROOT%{_prefix}/lib/opa
 
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/opa
 install -m 0644 version_delta $RPM_BUILD_ROOT%{_sysconfdir}/opa/version_delta
@@ -142,33 +141,39 @@ if [ "$vnic_stat" == "" ]; then
 fi
 
 # Post-install configuration -- environment variables set by INSTALL script
-# Only 0 or 1 value supported; will use default config if set to anything else
+# 0 = disable, 1 = enable, -1 = previous; will use default config if set to anything else
 # Default configuration is performed by else statement for each condition
 if [ “$OPA_INSTALL_CALLER” != “0” ]; then
  if [ “$OPA_UDEV_RULES” == “0” ]; then
    /sbin/opasystemconfig --disable Udev_Access
- else /sbin/opasystemconfig --enable Udev_Access
+ elif [ “$OPA_UDEV_RULES” != “-1” ]; then
+   /sbin/opasystemconfig --enable Udev_Access
  fi
  if [ “$OPA_LIMITS_CONF” == “0” ]; then
    /sbin/opasystemconfig --disable Memory_Limit
- else /sbin/opasystemconfig --enable Memory_Limit
+ elif [ “$OPA_LIMITS_CONF” != “-1” ]; then
+   /sbin/opasystemconfig --enable Memory_Limit
  fi
  grep -q '^ARPTABLE_TUNING=' /etc/rdma/rdma.conf || echo 'ARPTABLE_TUNING=' >> /etc/rdma/rdma.conf
  if [ “$OPA_ARPTABLE_TUNING” == “0” ]; then
    /sbin/opaautostartconfig  --disable ARPTABLE_TUNE
- else /sbin/opaautostartconfig --enable ARPTABLE_TUNE
+ elif [ “$OPA_ARPTABLE_TUNING” != “-1” ]; then
+   /sbin/opaautostartconfig --enable ARPTABLE_TUNE
  fi
  if [ “$OPA_SRP_LOAD” == “1” ]; then
    /sbin/opaautostartconfig  --enable SRP
- else /sbin/opaautostartconfig --disable SRP
+ elif [ “$OPA_SRP_LOAD” != “-1” ]; then
+   /sbin/opaautostartconfig --disable SRP
  fi
  if [ “$OPA_SRPT_LOAD” == “1” ]; then
    /sbin/opaautostartconfig  --enable SRPT
- else /sbin/opaautostartconfig --disable SRPT
+ elif [ “$OPA_SRPT_LOAD” != “-1” ]; then
+   /sbin/opaautostartconfig --disable SRPT
  fi
  if [ “$OPA_IRQBALANCE” == “0” ]; then
    /sbin/opasystemconfig --disable Irq_Balance
- else /sbin/opasystemconfig --enable Irq_Balance
+ elif [ “$OPA_IRQBALANCE” != “-1” ]; then
+   /sbin/opasystemconfig --enable Irq_Balance
  fi
 fi
 
@@ -194,25 +199,25 @@ fi
 %endif
 
 # Pre-uninstall configuration -- environment variables set by INSTALL script
-# Only 0 or 1 value supported; will use default config if set to anything else
+# 0 = disable, 1 = enable, -1 = previous; will use default config if set to anything else
 if [ “$OPA_INSTALL_CALLER” != “0” ]; then
- if [ “$OPA_UDEV_RULES” != “1” ]; then
+ if [ “$OPA_UDEV_RULES” != “1” ] && [ “$OPA_UDEV_RULES” != “-1” ]; then
    /sbin/opasystemconfig --disable Udev_Access
  fi
- if [ “$OPA_LIMITS_CONF” != “1” ]; then
+ if [ “$OPA_LIMITS_CONF” != “1” ] && [ “$OPA_LIMITS_CONF” != “-1” ]; then
    /sbin/opasystemconfig --disable Memory_Limit
  fi
- if [ “$OPA_ARPTABLE_TUNING” != “1” ]; then
+ if [ “$OPA_ARPTABLE_TUNING” != “1” ] && [ “$OPA_ARPTABLE_TUNING” != “-1” ]; then
    /sbin/opaautostartconfig  --disable ARPTABLE_TUNE
  fi
  sed -i -- '/^ARPTABLE_TUNING=[^ ]*/ d' /etc/rdma/rdma.conf
- if [ “$OPA_SRP_LOAD” != “1” ]; then
+ if [ “$OPA_SRP_LOAD” != “1” ] && [ “$OPA_SRP_LOAD” != “-1” ]; then
    /sbin/opaautostartconfig --disable SRP
  fi
- if [ “$OPA_SRPT_LOAD” != “1” ]; then
+ if [ “$OPA_SRPT_LOAD” != “1” ] && [ “$OPA_SRPT_LOAD” != “-1” ]; then
    /sbin/opaautostartconfig --disable SRPT
  fi
- if [ “$OPA_IRQBALANCE” != “1” ]; then
+ if [ “$OPA_IRQBALANCE” != “1” ] && [ “$OPA_IRQBALANCE” != “-1” ]; then
    /sbin/opasystemconfig --disable Irq_Balance
  fi
 fi
@@ -237,7 +242,6 @@ fi
 %{_sysconfdir}/sysconfig/opa/udev.rules
 /sbin/opaautostartconfig
 /sbin/opasystemconfig
-%{_prefix}/lib/opa/.comp_ofed_delta.pl
 %{_sysconfdir}/opa/version_delta
 %if 0%{?rhel} && 0%{?rhel} < 7
 %{_sysconfdir}/init.d/opa
