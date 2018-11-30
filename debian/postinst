@@ -13,10 +13,6 @@ set -e
  else opasystemconfig --enable Memory_Limit
  fi
  grep -q '^ARPTABLE_TUNING=' /etc/rdma/rdma.conf || echo 'ARPTABLE_TUNING=' >> /etc/rdma/rdma.conf
- if [ "$OPA_ARPTABLE_TUNING" = "0" ]; then
-   opaautostartconfig  --disable ARPTABLE_TUNE
- else opaautostartconfig --enable ARPTABLE_TUNE
- fi
  if [ "$OPA_SRP_LOAD" = "1" ]; then
    opaautostartconfig  --enable SRP
  else opaautostartconfig --disable SRP
