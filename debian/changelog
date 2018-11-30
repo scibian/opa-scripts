@@ -1,3 +1,9 @@
+opa-scripts (1.1-1-1-1ifs+deb9sci9+opa10.7u2) scibian9+opa10.7; urgency=medium
+
+  * Let me control my sysctl
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Fri, 30 Nov 2018 10:00:25 +0100
+
 opa-scripts (1.1-1-1-1ifs+deb9sci9+opa10.7u1) scibian9+opa10.7; urgency=medium
 
   * Scibian9+OPA10.7 Release.
