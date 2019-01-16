@@ -1,53 +1,51 @@
 #!/usr/bin/make -f
 #
+# Copyright (c) 2017, Intel Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
-
-VERSION := $(shell cat version_delta)
-INSTFILES := $(shell find debian/opa-scripts -type f)
-DESTDIR=debian/opa-scripts
+SYS_MAN1_DIR := usr/share/man/man1
+INSTALL_DIR := debian/tmp
 
 %:
-	dh $@ --with=systemd
-
-override_dh_auto_clean:
-	rm -f opa-init-kernel opa-arptbl-tuneup
+	dh $@ --with systemd --parallel
 
 override_dh_auto_install:
-	dh_auto_install $@
-
-	cp opa.service debian/opa-scripts.opa.service
-	install -d -m 0755 $(DESTDIR)/usr/sbin
-	install -m 0755 opad.sbin $(DESTDIR)/usr/sbin/opa-init-kernel
-	install -m 0755 arptbl_tuneup $(DESTDIR)/usr/sbin/opa-arptbl-tuneup
-
-	install -d -m 0755 $(DESTDIR)/etc/opa
-	install -m 0644 limits.conf $(DESTDIR)/etc/opa
-	install -m 0644 udev.permissions $(DESTDIR)/etc/opa
-	install -m 0644 udev.rules $(DESTDIR)/etc/opa
-
-	install -d -m 0755 $(DESTDIR)/etc/rdma
-	install -m 0644 debian/conf/etc-rdma-rdma.conf $(DESTDIR)/etc/rdma/rdma.conf
-	install -d -m 0755 $(DESTDIR)/etc/modules-load.d
-	install -m 0644 debian/conf/etc-modules-load-rdma.conf $(DESTDIR)/etc/modules-load.d/rdma.conf
-	install -d -m 0755 $(DESTDIR)/etc/infiniband-diags
-	install -m 0644 debian/conf/etc-infiniband-diags-ibdiag.conf $(DESTDIR)/etc/infiniband-diags/ibdiag.conf
-
-	install -d -m 0755 $(DESTDIR)/sbin
-	install -m 0755 opaautostartconfig $(DESTDIR)/sbin/opaautostartconfig
-	install -m 0755 opasystemconfig $(DESTDIR)/sbin/opasystemconfig
-
-	install -d -m 0755 $(DESTDIR)/usr/share/man/man1
-	install -m 0644 opa-arptbl-tuneup.1 $(DESTDIR)/usr/share/man/man1
-	install -m 0644 opa-init-kernel.1 $(DESTDIR)/usr/share/man/man1
-	install -m 0644 opaautostartconfig.1 $(DESTDIR)/usr/share/man/man1
-
-	install -d -m 0755 $(DESTDIR)/usr/lib/opa
-	install -m 0755 .comp_ofed_delta.pl $(DESTDIR)/usr/lib/opa
-
-	install -m 0644 version_delta $(DESTDIR)/etc/opa/version_delta
-
-	echo `find debian/opa-scripts -type f -exec sed "s/\(ICS VERSION STRING:\s*\)unknown/\1$(VERSION)/" -i {} \; `
-
-override_dh_systemd_enable:
-	dh_systemd_enable -popa-scripts --name opa opa.service
-	dh_systemd_enable -popa-scripts --name rdma-ndd rdma-ndd.service
+	install -D -m 0755 opad.sbin $(INSTALL_DIR)/usr/sbin/opa-init-kernel
+	install -D -m 0755 arptbl_tuneup $(INSTALL_DIR)/usr/sbin/opa-arptbl-tuneup
+	install -D -m 0755 -t $(INSTALL_DIR)/sbin opaautostartconfig
+	install -D -m 0755 -t $(INSTALL_DIR)/sbin opasystemconfig
+	install -D -m 0755 -t $(INSTALL_DIR)/etc/rdma rdma.conf
+	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa version_delta
+	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa limits.conf
+	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa udev.permissions
+	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa udev.rules
+	install -D -m 0644 -t $(INSTALL_DIR)/lib/systemd/system opa.service
+	install -D -m 0644 -t $(INSTALL_DIR)/$(SYS_MAN1_DIR) opa-init-kernel.1
+	gzip $(INSTALL_DIR)/$(SYS_MAN1_DIR)/opa-init-kernel.1
+	install -D -m 0644 -t $(INSTALL_DIR)/$(SYS_MAN1_DIR) opa-arptbl-tuneup.1
+	gzip $(INSTALL_DIR)/$(SYS_MAN1_DIR)/opa-arptbl-tuneup.1
+	install -D -m 0644 -t $(INSTALL_DIR)/$(SYS_MAN1_DIR) opaautostartconfig.1
+	gzip $(INSTALL_DIR)/$(SYS_MAN1_DIR)/opaautostartconfig.1

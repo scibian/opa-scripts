@@ -1,5 +1,0 @@
-port-arptbl_tuneup.patch
-port-opa-service.patch
-port-opasystemconfig.patch
-port-comp_ofed_delta.patch
-port-stretch.patch

@@ -1,0 +1,12 @@
+opa-scripts (1.1-1) UNRELEASED; urgency=medium
+
+  * Add Ubuntu support
+
+ -- Tymoteusz Kielan <tymoteusz.kielan@intel.com>  Tue, 17 Jan 2017 14:33:59 +0100
+
+opa-scripts (1.0) UNRELEASED; urgency=medium
+
+  * Initial release
+  * Manpage changes
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 14 Mar 2016 12:26:35 -0500

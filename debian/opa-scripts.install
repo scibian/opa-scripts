@@ -1,0 +1,13 @@
+/etc/rdma/rdma.conf
+/etc/opa/version_delta
+/etc/opa/limits.conf
+/etc/opa/udev.permissions
+/etc/opa/udev.rules
+/lib/systemd/system/opa.service
+/sbin/opaautostartconfig
+/sbin/opasystemconfig
+/usr/sbin/opa-arptbl-tuneup
+/usr/sbin/opa-init-kernel
+/usr/share/man/man1/opa-init-kernel.1.gz
+/usr/share/man/man1/opa-arptbl-tuneup.1.gz
+/usr/share/man/man1/opaautostartconfig.1.gz
