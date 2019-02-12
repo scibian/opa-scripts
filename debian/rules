@@ -40,7 +40,6 @@ override_dh_auto_install:
 	install -m 0644 opaautostartconfig.1 $(DESTDIR)/usr/share/man/man1
 
 	install -d -m 0755 $(DESTDIR)/usr/lib/opa
-	install -m 0755 .comp_ofed_delta.pl $(DESTDIR)/usr/lib/opa
 
 	install -m 0644 version_delta $(DESTDIR)/etc/opa/version_delta
 
