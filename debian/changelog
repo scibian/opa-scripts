@@ -1,3 +1,10 @@
+opa-scripts (1.1-1-2-1ifs+deb9sci9+opa10.8u1) scibian9+opa10.8; urgency=medium
+
+  [ Mhamed Bouaziz ]
+  * Imported Upstream version 1.1-1-2
+
+ -- Thomas HAMEL <thomas-externe.hamel@edf.fr>  Tue, 12 Feb 2019 23:20:03 +0100
+
 opa-scripts (1.1-1-2-1ifs+deb9) stretch; urgency=medium
 
   * Import opa-scripts 1.1-1 from IFS RHEL75 10.8.0.0.204 upstream.
