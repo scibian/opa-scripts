@@ -50,43 +50,6 @@ Autostart_Comp[3]="SRPT"
 Autostart_Comp[4]="IBACM"
 Autostart_Comp[5]="OPAFM"
 Autostart_Comp[6]="ARPTABLE_TUNE"
-Autostart_Comp[7]="OPA_VNIC"
-
-# Find start system in use
-function get_start_system() {
-		if [ -e /proc/1/cmdline ]; then
-			echo $(ps -o comm= 1)
-		elif [ -d /usr/lib/systemd ]; then
-			echo 'systemd'
-		elif [ -d /etc/init.d ]; then
-			echo 'init'
-		else
-			echo ''
-		fi
-}
-
-# Check for systemd vs upstart
-function service_enable(){
-        local start_system=$(get_start_system)
-        if [ "${start_system}" = "systemd" ]; then
-                systemctl enable $1
-        elif [ "${start_system}" = "init" ]; then
-                chkconfig $1 on
-        else
-                echo "Service $1 was not enabled. Please enable it manually"
-        fi
-}
-
-function service_disable(){
-        local start_system=$(get_start_system)
-        if [ "${start_system}" = "systemd" ]; then
-                systemctl disable $1
-        elif [ "${start_system}" = "init" ]; then
-                chkconfig $1 off
-        else
-                echo "Service $1 was not disabled. Please disable it manually"
-        fi
-}
 
 # HFI Driver
 BLACKLIST_FILE="/etc/modprobe.d/opa-blacklist.conf";
@@ -239,28 +202,6 @@ function ARPTABLE_TUNE_Autostart_Status(){
         else
                 return $NOT_AVAIL
         fi
-}
-
-#OPA_VNIC
-function OPA_VNIC_Autostart_Enable(){
-	service_enable opa.service
-	sed -i -- 's/OPA_VNIC=[^ ]*/OPA_VNIC=yes/g' $RDMA_CONFIG
-}
-
-function OPA_VNIC_Autostart_Disable(){
-	sed -i -- 's/OPA_VNIC=[^ ]*/OPA_VNIC=no/g' $RDMA_CONFIG
-}
-
-function OPA_VNIC_Autostart_Status(){
-	status=$(sed -n '/OPA_VNIC=/'p $RDMA_CONFIG)
-        if [ "$status" == "OPA_VNIC=yes" ]; then
-                return $ENABLE
-        elif [ "$status" == "OPA_VNIC=no" ]; then
-                return $DISABLE
-        else
-                return $NOT_AVAIL
-        fi
-
 }
 
 function list_utilities(){

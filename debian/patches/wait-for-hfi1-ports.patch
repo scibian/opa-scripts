@@ -1,0 +1,29 @@
+Description: Wait for hfi1 ports before renice MAD processes
+ The hfi1 ports may not be active when opad.sbin executes.
+ This patch waits for 5 seconds for the ports to appear before
+ renicing the MAD processes.
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Forwarded: not-needed
+Last-Update: <2019-02-19>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/opad.sbin
++++ b/opad.sbin
+@@ -85,6 +85,17 @@
+ 	# Set max_ports_num_in_hca variable
+ 	count_ib_ports
+ 	ports_num=$?
++	get_ports_retries=0
++	while [ ${ports_num} -eq 0 ] ; do
++		if [ ${get_ports_retries} -gt 0 ] ; then
++			echo "Failed to get HCA ports"
++			break
++		fi
++		sleep 5
++		count_ib_ports
++		ports_num=$?
++		let get_ports_retries++
++	done
+ 	list_of_ibmads=""
+ 	for (( i=1 ; $i <= ${max_ports_num_in_hca} ; i++ ))
+ 	do

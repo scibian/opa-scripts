@@ -1,11 +1,10 @@
 Description: Port opa service to Debian
  Modifies opa.service so it works correctly on Debian.
  .
- Modifies opad.sbin to wait until HCA ports are available. Corrects
- use of missing usleep utility. Launch rdma-ndd service.
+ Corrects use of missing usleep utility.
 Author: Brian T. Smith <bsmith@systemfabricworks.com>
 Forwarded: not-needed
-Last-Update: <2017-11-20>
+Last-Update: <2019-02-19>
 ---
 This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 --- a/opa.service
@@ -29,26 +28,7 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
 +WantedBy=sysinit.target
 --- a/opad.sbin
 +++ b/opad.sbin
-@@ -85,6 +85,18 @@
- 	# Set max_ports_num_in_hca variable
- 	count_ib_ports
- 	ports_num=$?
-+	get_ports_retries=0
-+        while [ ${ports_num} -eq 0 ] ; do
-+		if [ ${get_ports_retries} -gt 10 ] ; then
-+			echo "Failed to get HCA ports"
-+			break
-+		fi
-+		sleep 5
-+		count_ib_ports
-+		ports_num=$?
-+		let get_ports_retries++
-+	done
-+
- 	list_of_ibmads=""
- 	for (( i=1 ; $i <= ${max_ports_num_in_hca} ; i++ ))
- 	do
-@@ -101,7 +113,7 @@
+@@ -101,7 +101,7 @@
  			echo Failed to get $ports_num ib_mad PIDs to renice. Got ${num_of_root_ibmad_procs}.
  			break
  		fi
@@ -57,11 +37,3 @@ This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
  		ib_mad_pids=($(pidof ${list_of_ibmads} 2> /dev/null))
  		num_of_root_ibmad_procs=$(/bin/ps h -o user -p ${ib_mad_pids[*]} | grep -w root | wc -l)
  		let get_pid_retries++
-@@ -114,7 +126,6 @@
- 	done
- 	echo "done."
- fi
--
- if [ "${ARPTABLE_TUNING}" == "yes" ]; then
- 	/usr/sbin/opa-arptbl-tuneup start
- fi

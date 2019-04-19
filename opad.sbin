@@ -60,7 +60,7 @@ if [ $# -ge 1 ]; then
 	echo "        to be run by hand." >&2
 	echo >&2
 	echo "Usage: ${cmd} [--help]" >&2
-	if [ $1 -eq "--help" ]; then
+	if [ "$1" = "--help" ]; then
 		exit 0
 	else
 		exit 1
@@ -117,10 +117,6 @@ fi
 
 if [ "${ARPTABLE_TUNING}" == "yes" ]; then
 	/usr/sbin/opa-arptbl-tuneup start
-fi
-
-if [ "${OPA_VNIC}" == "yes" ]; then
-        modprobe opa_vnic
 fi
 
 exit 0

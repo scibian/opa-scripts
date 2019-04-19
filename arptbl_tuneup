@@ -162,8 +162,8 @@ if [[ -e $SYSCTL_ORIG ]]; then
 	while read line; do
 		for str in $prot_list; do
 		 	_curr=`sysctl net.$str.neigh.default.$str2 |cut -d' ' -f3`
-			if [[ $line = *"$str2"* ]]; then
-                        	_saved=`echo $line | grep $str | grep $str2 | cut -d' ' -f3`
+			if [[ $line = *"$str"* && $line = *"$str2"* ]]; then
+                        	_saved=`echo $line | cut -d' ' -f3`
 				if ((_curr != _saved)); then
 					return 0
 				fi

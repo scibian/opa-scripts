@@ -34,8 +34,8 @@
 
 Summary:        Omnipath Fabric initialization
 Name:           opa-scripts
-Version:        1.1
-Release:        1
+Version:        1.2
+Release:        2
 License:        GPL-2.0+
 Group:          System Environment/Base
 Source:         %{name}-%{version}.tar.gz
@@ -105,12 +105,15 @@ install -d $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 opa-arptbl-tuneup.1 $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 opa-init-kernel.1 $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 opaautostartconfig.1 $RPM_BUILD_ROOT%{_mandir}/man1
+install -m 0644 opasystemconfig.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
 install -d $RPM_BUILD_ROOT%{_prefix}/lib/opa
 
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/opa
 install -m 0644 version_delta $RPM_BUILD_ROOT%{_sysconfdir}/opa/version_delta
 
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/opa
+install -m 0755 hintpolicy_exact_hfi1.sh $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/opa/hintpolicy_exact_hfi1.sh
 %clean
 
 %post
@@ -134,11 +137,6 @@ if [ $1 = 1 ]; then
     fi
 fi
 %endif
-
-vnic_stat=$(grep '^OPA_VNIC=' /etc/rdma/rdma.conf)
-if [ "$vnic_stat" == "" ]; then
-        echo "OPA_VNIC=no" >>  /etc/rdma/rdma.conf
-fi
 
 # Post-install configuration -- environment variables set by INSTALL script
 # 0 = disable, 1 = enable, -1 = previous; will use default config if set to anything else
@@ -175,12 +173,6 @@ if [ “$OPA_INSTALL_CALLER” != “0” ]; then
  elif [ “$OPA_IRQBALANCE” != “-1” ]; then
    /sbin/opasystemconfig --enable Irq_Balance
  fi
-fi
-
-if [ “$OPA_VNIC” == “0” ]; then
-	/sbin/opaautostartconfig --disable OPA_VNIC
-elif [ “$OPA_VNIC” == “1” ]; then
-	/sbin/opaautostartconfig --enable OPA_VNIC
 fi
 
 %preun
@@ -221,7 +213,6 @@ if [ “$OPA_INSTALL_CALLER” != “0” ]; then
    /sbin/opasystemconfig --disable Irq_Balance
  fi
 fi
-sed -i -- '/^OPA_VNIC=[^ ]*/ d' /etc/rdma/rdma.conf
 
 %postun
 %if 0%{?suse_version} >= 1315
@@ -242,6 +233,7 @@ fi
 %{_sysconfdir}/sysconfig/opa/udev.rules
 /sbin/opaautostartconfig
 /sbin/opasystemconfig
+%{_sysconfdir}/sysconfig/opa/hintpolicy_exact_hfi1.sh
 %{_sysconfdir}/opa/version_delta
 %if 0%{?rhel} && 0%{?rhel} < 7
 %{_sysconfdir}/init.d/opa
@@ -251,3 +243,4 @@ fi
 %{_mandir}/man1/opa-arptbl-tuneup.1*
 %{_mandir}/man1/opa-init-kernel.1*
 %{_mandir}/man1/opaautostartconfig.1*
+%{_mandir}/man1/opasystemconfig.1*
