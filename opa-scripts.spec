@@ -1,10 +1,10 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-#
-# Copyright (c) 2015, Intel Corporation
-#
+# 
+# Copyright (c) 2015-2017, Intel Corporation
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-#
+# 
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,7 +24,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# 
 # END_ICS_COPYRIGHT8   ****************************************
 
 #[ICS VERSION STRING: unknown]
@@ -34,8 +34,8 @@
 
 Summary:        Omnipath Fabric initialization
 Name:           opa-scripts
-Version:        1.1
-Release:        1
+Version:        1.2
+Release:        2
 License:        GPL-2.0+
 Group:          System Environment/Base
 Source:         %{name}-%{version}.tar.gz
@@ -105,13 +105,15 @@ install -d $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 opa-arptbl-tuneup.1 $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 opa-init-kernel.1 $RPM_BUILD_ROOT%{_mandir}/man1
 install -m 0644 opaautostartconfig.1 $RPM_BUILD_ROOT%{_mandir}/man1
+install -m 0644 opasystemconfig.1 $RPM_BUILD_ROOT%{_mandir}/man1
 
 install -d $RPM_BUILD_ROOT%{_prefix}/lib/opa
-install -m 0755 .comp_ofed_delta.pl $RPM_BUILD_ROOT%{_prefix}/lib/opa
 
 install -d $RPM_BUILD_ROOT/%{_sysconfdir}/opa
 install -m 0644 version_delta $RPM_BUILD_ROOT%{_sysconfdir}/opa/version_delta
 
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/opa
+install -m 0755 hintpolicy_exact_hfi1.sh $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/opa/hintpolicy_exact_hfi1.sh
 %clean
 
 %post
@@ -137,33 +139,39 @@ fi
 %endif
 
 # Post-install configuration -- environment variables set by INSTALL script
-# Only 0 or 1 value supported; will use default config if set to anything else
+# 0 = disable, 1 = enable, -1 = previous; will use default config if set to anything else
 # Default configuration is performed by else statement for each condition
 if [ “$OPA_INSTALL_CALLER” != “0” ]; then
  if [ “$OPA_UDEV_RULES” == “0” ]; then
    /sbin/opasystemconfig --disable Udev_Access
- else /sbin/opasystemconfig --enable Udev_Access
+ elif [ “$OPA_UDEV_RULES” != “-1” ]; then
+   /sbin/opasystemconfig --enable Udev_Access
  fi
  if [ “$OPA_LIMITS_CONF” == “0” ]; then
    /sbin/opasystemconfig --disable Memory_Limit
- else /sbin/opasystemconfig --enable Memory_Limit
+ elif [ “$OPA_LIMITS_CONF” != “-1” ]; then
+   /sbin/opasystemconfig --enable Memory_Limit
  fi
  grep -q '^ARPTABLE_TUNING=' /etc/rdma/rdma.conf || echo 'ARPTABLE_TUNING=' >> /etc/rdma/rdma.conf
  if [ “$OPA_ARPTABLE_TUNING” == “0” ]; then
    /sbin/opaautostartconfig  --disable ARPTABLE_TUNE
- else /sbin/opaautostartconfig --enable ARPTABLE_TUNE
+ elif [ “$OPA_ARPTABLE_TUNING” != “-1” ]; then
+   /sbin/opaautostartconfig --enable ARPTABLE_TUNE
  fi
  if [ “$OPA_SRP_LOAD” == “1” ]; then
    /sbin/opaautostartconfig  --enable SRP
- else /sbin/opaautostartconfig --disable SRP
+ elif [ “$OPA_SRP_LOAD” != “-1” ]; then
+   /sbin/opaautostartconfig --disable SRP
  fi
  if [ “$OPA_SRPT_LOAD” == “1” ]; then
    /sbin/opaautostartconfig  --enable SRPT
- else /sbin/opaautostartconfig --disable SRPT
+ elif [ “$OPA_SRPT_LOAD” != “-1” ]; then
+   /sbin/opaautostartconfig --disable SRPT
  fi
  if [ “$OPA_IRQBALANCE” == “0” ]; then
    /sbin/opasystemconfig --disable Irq_Balance
- else /sbin/opasystemconfig --enable Irq_Balance
+ elif [ “$OPA_IRQBALANCE” != “-1” ]; then
+   /sbin/opasystemconfig --enable Irq_Balance
  fi
 fi
 
@@ -183,25 +191,25 @@ fi
 %endif
 
 # Pre-uninstall configuration -- environment variables set by INSTALL script
-# Only 0 or 1 value supported; will use default config if set to anything else
+# 0 = disable, 1 = enable, -1 = previous; will use default config if set to anything else
 if [ “$OPA_INSTALL_CALLER” != “0” ]; then
- if [ “$OPA_UDEV_RULES” != “1” ]; then
+ if [ “$OPA_UDEV_RULES” != “1” ] && [ “$OPA_UDEV_RULES” != “-1” ]; then
    /sbin/opasystemconfig --disable Udev_Access
  fi
- if [ “$OPA_LIMITS_CONF” != “1” ]; then
+ if [ “$OPA_LIMITS_CONF” != “1” ] && [ “$OPA_LIMITS_CONF” != “-1” ]; then
    /sbin/opasystemconfig --disable Memory_Limit
  fi
- if [ “$OPA_ARPTABLE_TUNING” != “1” ]; then
+ if [ “$OPA_ARPTABLE_TUNING” != “1” ] && [ “$OPA_ARPTABLE_TUNING” != “-1” ]; then
    /sbin/opaautostartconfig  --disable ARPTABLE_TUNE
  fi
  sed -i -- '/^ARPTABLE_TUNING=[^ ]*/ d' /etc/rdma/rdma.conf
- if [ “$OPA_SRP_LOAD” != “1” ]; then
+ if [ “$OPA_SRP_LOAD” != “1” ] && [ “$OPA_SRP_LOAD” != “-1” ]; then
    /sbin/opaautostartconfig --disable SRP
  fi
- if [ “$OPA_SRPT_LOAD” != “1” ]; then
+ if [ “$OPA_SRPT_LOAD” != “1” ] && [ “$OPA_SRPT_LOAD” != “-1” ]; then
    /sbin/opaautostartconfig --disable SRPT
  fi
- if [ “$OPA_IRQBALANCE” != “1” ]; then
+ if [ “$OPA_IRQBALANCE” != “1” ] && [ “$OPA_IRQBALANCE” != “-1” ]; then
    /sbin/opasystemconfig --disable Irq_Balance
  fi
 fi
@@ -225,7 +233,7 @@ fi
 %{_sysconfdir}/sysconfig/opa/udev.rules
 /sbin/opaautostartconfig
 /sbin/opasystemconfig
-%{_prefix}/lib/opa/.comp_ofed_delta.pl
+%{_sysconfdir}/sysconfig/opa/hintpolicy_exact_hfi1.sh
 %{_sysconfdir}/opa/version_delta
 %if 0%{?rhel} && 0%{?rhel} < 7
 %{_sysconfdir}/init.d/opa
@@ -235,3 +243,4 @@ fi
 %{_mandir}/man1/opa-arptbl-tuneup.1*
 %{_mandir}/man1/opa-init-kernel.1*
 %{_mandir}/man1/opaautostartconfig.1*
+%{_mandir}/man1/opasystemconfig.1*

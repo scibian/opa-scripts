@@ -1,5 +1,5 @@
 port-arptbl_tuneup.patch
 port-opa-service.patch
+wait-for-hfi1-ports.patch
 port-opasystemconfig.patch
-port-comp_ofed_delta.patch
-port-stretch.patch
+port-opaautostartconfig.patch

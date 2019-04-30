@@ -1,11 +1,9 @@
 Source: opa-scripts
-Maintainer: Scibian Project <packaging@scibian.org>
+Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
 Section: misc
 Priority: extra
 Standards-Version: 3.9.8
 Homepage: http://www.intel.com
-Vcs-Git: https://github.com/scibian/opa-scripts.git
-Vcs-Browser: https://github.com/scibian/opa-scripts
 Build-Depends: debhelper (>= 10),
                dh-systemd,
 
@@ -13,8 +11,7 @@ Package: opa-scripts
 Architecture: all
 Depends: infiniband-diags,
          irqbalance,
-         opa-basic-tools,
          systemd,
          ${misc:Depends},
-Description: Omnipath Fabric initialization
- User space initialization scripts for the Omnipath Fabric
+Description: Omni-Path Fabric initialization
+ User space initialization scripts for the Omni-Path Fabric
