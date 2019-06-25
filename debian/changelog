@@ -1,0 +1,95 @@
+opa-scripts (1.2-2-2-1ifs+deb8) jessie; urgency=medium
+
+  * Import opa-scripts 1.2-2 from IFS RHEL76 10.9.2.0.9 upstream.
+    Upstream version is still 1.2-2, but the code has changed. Add -2
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Tue, 25 Jun 2019 16:25:19 -0500
+
+opa-scripts (1.2-2-1-1ifs+deb8) jessie; urgency=medium
+
+  * Import opa-scripts 1.2-2 from IFS RHEL76 10.9.2.0.9 upstream.
+    Upstream version is still 1.2-2, but the code has changed. Add -1
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Fri, 19 Apr 2019 14:15:11 -0500
+
+opa-scripts (1.2-2-1ifs+deb8) jessie; urgency=medium
+
+  * Import opa-scripts 1.2-1 from IFS RHEL76 10.9.0.1.5 upstream.
+  * Revise dependencies.
+  * Change port timeout in opad.sbin from 50s to 5s.
+  * Remove SRP, SRPT and IPOIB options from opaautostartconfig. /etc/rdma.conf
+    is not used to load modules on Debian.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Tue, 19 Feb 2019 14:40:09 -0600
+
+opa-scripts (1.1-1-2-1ifs+deb8) jessie; urgency=medium
+
+  * Import opa-scripts 1.1-1 from IFS RHEL75 10.8.0.0.204 upstream.
+    Upstream version is still 1.1-1, but the code has changed. Add -2
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 10 Oct 2018 20:25:33 -0500
+
+opa-scripts (1.1-1-1-1ifs+deb8) jessie; urgency=medium
+
+  * Import opa-scripts 1.1-1 from IFS RHEL74 10.7.0.0.145 upstream.
+    Upstream version is still 1.1-1, but the code has changed. Add -1
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 24 May 2018 17:23:20 -0500
+
+opa-scripts (1.1-1-4ifs) jessie; urgency=medium
+
+  * Correct uninstallation of packages.
+  * Correct detection of openmpi-gcc.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 14 May 2018 20:21:42 -0500
+
+opa-scripts (1.1-1-3ifs) jessie; urgency=medium
+
+  * Use git packaging and pristine-source.
+  * Modify port of opasystemconfig to correctly work with init-managed
+    irqbalance when systemd is also running,
+  * Add chkconfig dependency.
+  * Change architecture to all.
+  * Refresh patches and modify to address porting issues in latest version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 20 Oct 2017 17:28:21 -0500
+
+opa-scripts (1.1-1-2ifs) jessie; urgency=medium
+
+  * Port parts of .comp_ofed_delta required by opaconfig to Debian.
+  * Install etc/modules-load.d/rdma.conf.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 12 Oct 2017 10:05:12 -0500
+
+opa-scripts (1.1-1-1ifs) jessie; urgency=medium
+
+  * Import opa-scripts 1.1-1 from IFS 10.5.0.0.155 upstream.
+  * Revise maintainer scripts to use dh_helper, check errors,
+    don't use absolute paths.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Tue, 19 Sep 2017 14:55:50 -0500
+
+opa-scripts (1.0-1.0-1ifs) jessie; urgency=medium
+
+  * Convert to quilt format. Corrected version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 08 Jun 2017 15:11:02 -0500
+
+opa-scripts (1.0.1.0) jessie; urgency=medium
+
+  * Include release in package version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Thu, 05 Jan 2017 21:12:35 -0600
+
+opa-scripts (1.0) jessie; urgency=medium
+
+  * Initial release.
+  * Import opa-scripts-1.0-1.0 from OPA 10.1.0.0.145.
+    manpage changes
+  * Import opa-scripts-1.0-1.0 from OPA 10.2.0.0.158.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 03 Oct 2016 16:25:35 -0500

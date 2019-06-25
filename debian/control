@@ -1,0 +1,17 @@
+Source: opa-scripts
+Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
+Section: misc
+Priority: extra
+Standards-Version: 3.9.6
+Homepage: http://www.intel.com
+Build-Depends: debhelper (>= 9),
+               dh-systemd,
+
+Package: opa-scripts
+Architecture: all
+Depends: chkconfig,
+         irqbalance,
+         systemd,
+         ${misc:Depends},
+Description: Omni-Path Fabric initialization
+ User space initialization scripts for the Omni-Path Fabric

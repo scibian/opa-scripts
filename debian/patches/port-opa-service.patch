@@ -1,0 +1,39 @@
+Description: Port opa service to Debian
+ Modifies opa.service so it works correctly on Debian.
+ .
+ Corrects use of missing usleep utility.
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Forwarded: not-needed
+Last-Update: <2019-02-19>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/opa.service
++++ b/opa.service
+@@ -31,12 +31,13 @@
+ #
+ [Unit]
+ Description=Initialize the OPA layer
+-After=rdma.service network.target
++DefaultDependencies=false
++Before=network.target remote-fs-pre.target
+ 
+ [Service]
+ Type=oneshot
+-RemainAfterExit=no
++RemainAfterExit=yes
+ ExecStart=/usr/sbin/opa-init-kernel
+ 
+ [Install]
+-WantedBy=multi-user.target
++WantedBy=sysinit.target
+--- a/opad.sbin
++++ b/opad.sbin
+@@ -101,7 +101,7 @@
+ 			echo Failed to get $ports_num ib_mad PIDs to renice. Got ${num_of_root_ibmad_procs}.
+ 			break
+ 		fi
+-		usleep 500000
++		sleep 5
+ 		ib_mad_pids=($(pidof ${list_of_ibmads} 2> /dev/null))
+ 		num_of_root_ibmad_procs=$(/bin/ps h -o user -p ${ib_mad_pids[*]} | grep -w root | wc -l)
+ 		let get_pid_retries++

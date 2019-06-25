@@ -1,0 +1,56 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2019, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opa-arptbl-tuneup 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
+.SH NAME
+opa-arptbl-tuneup
+
+
+
+.PP
+Adjusts kernel ARP/neighbor table sizes for very large subnets based on configured IPv4/IPv6 network interface netmask values. Normally executes once on boot by opa.service ; however, opa-arptbl-tuneup can be invoked with user discretion for a changed subnet configuration.
+.PP
+
+.B NOTE:
+Must execute as root.
+
+.SH Syntax
+
+opa-arptbl-tuneup [start | stop | restart | force-reload | status]
+.SH Options
+
+
+.TP 10
+--help
+
+Produces full help text.
+
+.TP 10
+start
+
+Adjusts kernel ARP table size.
+
+.TP 10
+stop
+
+Restores previous configuration.
+
+.TP 10
+restart
+
+Stops then starts.
+
+.TP 10
+force-reload
+
+Stops then starts. (Identical to restart option.)
+
+.TP 10
+status
+
+Checks if original table size was changed.

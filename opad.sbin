@@ -1,0 +1,122 @@
+#!/bin/bash 
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015-2017, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+
+CONFIG="/etc/rdma/rdma.conf"
+
+max_ports_num_in_hca=0
+
+count_ib_ports()
+{
+    local cnt=0
+    local ports_in_hca=0
+    sysdir=/sys/class/infiniband
+    hcas=$(/bin/ls -1 ${sysdir} 2> /dev/null)
+    for hca in $hcas
+    do
+        ports_in_hca=$(/bin/ls -1 ${sysdir}/${hca}/ports 2> /dev/null | wc -l)
+        if [ $ports_in_hca -gt $max_ports_num_in_hca ]; then
+                max_ports_num_in_hca=$ports_in_hca
+        fi
+        cnt=$[ $cnt + $ports_in_hca ]
+    done
+
+    return $cnt
+}
+
+if [ $# -ge 1 ]; then
+	cmd=`basename $0`
+	echo >&2
+	echo "        This script initializes the OPA extensions to the RDMA stack." >&2
+	echo "        It is normally run by the system at boot time and is not intended" >&2
+	echo "        to be run by hand." >&2
+	echo >&2
+	echo "Usage: ${cmd} [--help]" >&2
+	if [ "$1" = "--help" ]; then
+		exit 0
+	else
+		exit 1
+	fi
+fi
+
+if [ ! -f $CONFIG ]; then
+    echo No OPA configuration found
+    exit 0
+fi
+
+. $CONFIG
+
+# Make sure the debug FS is mounted with useful permissions.
+grep -qs "debugfs" /proc/mounts
+if [ $? -ne 0 ]; then
+	mount -o mode=755 -t debugfs none /sys/kernel/debug > /dev/null 2>&1
+fi
+
+if [ "${RENICE_IB_MAD}" == "yes" ]; then
+	echo -n "Renicing ib_mad processes..."
+	# Set max_ports_num_in_hca variable
+	count_ib_ports
+	ports_num=$?
+	list_of_ibmads=""
+	for (( i=1 ; $i <= ${max_ports_num_in_hca} ; i++ ))
+	do
+		list_of_ibmads="${list_of_ibmads} ib_mad${i}"
+	done
+
+	ib_mad_pids=($(pidof ${list_of_ibmads} 2> /dev/null))
+	num_of_root_ibmad_procs=$(/bin/ps h -o user -p ${ib_mad_pids[*]} | grep -w root | wc -l)
+	get_pid_retries=0
+	while [ ${num_of_root_ibmad_procs} -lt $ports_num ]
+	do
+		# Wait maximum for 5 sec to get ib_mad process pid
+		if [ $get_pid_retries -gt 10 ]; then
+			echo Failed to get $ports_num ib_mad PIDs to renice. Got ${num_of_root_ibmad_procs}.
+			break
+		fi
+		usleep 500000
+		ib_mad_pids=($(pidof ${list_of_ibmads} 2> /dev/null))
+		num_of_root_ibmad_procs=$(/bin/ps h -o user -p ${ib_mad_pids[*]} | grep -w root | wc -l)
+		let get_pid_retries++
+	done
+	for ib_mad_pid in ${ib_mad_pids[*]}
+	do
+		if [ "$(/bin/ps -p ${ib_mad_pid} h -o user 2> /dev/null)" == "root" ]; then
+			renice -19 ${ib_mad_pid} > /dev/null 2>&1
+		fi
+	done
+	echo "done."
+fi
+
+if [ "${ARPTABLE_TUNING}" == "yes" ]; then
+	/usr/sbin/opa-arptbl-tuneup start
+fi
+
+exit 0

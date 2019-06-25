@@ -1,0 +1,49 @@
+#!/usr/bin/make -f
+
+VERSION := $(shell cat version_delta)
+DESTDIR=debian/opa-scripts
+
+%:
+	dh $@ --with=systemd
+
+override_dh_auto_clean:
+	rm -f opa-init-kernel opa-arptbl-tuneup
+
+override_dh_auto_install:
+	dh_auto_install $@
+
+	cp opa.service debian/opa-scripts.opa.service
+	install -d -m 0755 $(DESTDIR)/usr/sbin
+	install -m 0755 opad.sbin $(DESTDIR)/usr/sbin/opa-init-kernel
+	install -m 0755 arptbl_tuneup $(DESTDIR)/usr/sbin/opa-arptbl-tuneup
+
+	install -d -m 0755 $(DESTDIR)/etc/opa
+	install -m 0644 limits.conf $(DESTDIR)/etc/opa
+	install -m 0644 udev.permissions $(DESTDIR)/etc/opa
+	install -m 0644 udev.rules $(DESTDIR)/etc/opa
+
+	install -d -m 0755 $(DESTDIR)/etc/rdma
+	install -m 0644 debian/conf/etc-rdma-rdma.conf $(DESTDIR)/etc/rdma/rdma.conf
+	install -d -m 0755 $(DESTDIR)/etc/modules-load.d
+	install -m 0644 debian/conf/etc-modules-load-rdma.conf $(DESTDIR)/etc/modules-load.d/rdma.conf
+
+	install -d -m 0755 $(DESTDIR)/usr/sbin
+	install -m 0755 opaautostartconfig $(DESTDIR)/usr/sbin/opaautostartconfig
+	install -m 0755 opasystemconfig $(DESTDIR)/usr/sbin/opasystemconfig
+
+	install -d -m 0755 $(DESTDIR)/usr/share/man/man1
+	install -m 0644 opa-arptbl-tuneup.1 $(DESTDIR)/usr/share/man/man1
+	install -m 0644 opa-init-kernel.1 $(DESTDIR)/usr/share/man/man1
+	install -m 0644 opaautostartconfig.1 $(DESTDIR)/usr/share/man/man1
+	install -m 0644 opasystemconfig.1 $(DESTDIR)/usr/share/man/man1
+
+	install -d -m 0755 $(DESTDIR)/usr/lib/opa
+
+	install -m 0644 version_delta $(DESTDIR)/etc/opa/version_delta
+
+	install -m 0755 hintpolicy_exact_hfi1.sh $(DESTDIR)/etc/opa/hintpolicy_exact_hfi1
+
+	echo `find $(DESTDIR) -type f -exec sed "s/\(ICS VERSION STRING:\s*\)unknown/\1$(VERSION)/" -i {} \; `
+
+override_dh_systemd_enable:
+	dh_systemd_enable -popa-scripts --name opa opa.service

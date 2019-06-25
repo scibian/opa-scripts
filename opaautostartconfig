@@ -1,0 +1,333 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015-2017, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# The script helps to configure autostart settings for different utilities
+#
+# Each configuration option has three functions
+# 1) Enable
+# 2) Disable
+# 3) Status
+# The naming convention for any utility for autostart setting should be
+# *Utility*_AutoStart_Enable
+# *Utility*_Autostart Disable
+# *Utility*_Autostart_Status
+
+ENABLE=0
+DISABLE=1
+NOT_AVAIL=2
+
+Autostart_Comp[0]="HFI_Driver"
+Autostart_Comp[1]="IPOIB"
+Autostart_Comp[2]="SRP"
+Autostart_Comp[3]="SRPT"
+Autostart_Comp[4]="IBACM"
+Autostart_Comp[5]="OPAFM"
+Autostart_Comp[6]="ARPTABLE_TUNE"
+
+# HFI Driver
+BLACKLIST_FILE="/etc/modprobe.d/opa-blacklist.conf";
+BLACKLIST_STR="blacklist hfi1"
+
+function HFI_Driver_Autostart_Status(){
+        status=$(ls /etc/modprobe.d/ | grep 'opa-blacklist.conf')
+        if [ "$status" = "opa-blacklist.conf" ]; then
+                return $DISABLE
+        else
+                return $ENABLE
+        fi
+}
+
+function HFI_Driver_Autostart_Enable(){
+	HFI_Driver_Autostart_Status
+	if [ "$?" == "$DISABLE" ]; then
+                rm -f  $BLACKLIST_FILE
+        fi
+}
+
+function HFI_Driver_Autostart_Disable(){
+	HFI_Driver_Autostart_Status
+	if [ "$?" == "$ENABLE" ]; then
+                touch  $BLACKLIST_FILE
+		echo $BLACKLIST_STR > $BLACKLIST_FILE
+        fi
+}
+
+RDMA_CONFIG="/etc/rdma/rdma.conf"
+
+# OFA IP over IB
+function IPOIB_Autostart_Enable(){
+	sed -i -- 's/IPOIB_LOAD=[^ ]*/IPOIB_LOAD=yes/g' $RDMA_CONFIG
+}
+
+function IPOIB_Autostart_Disable(){
+	sed -i -- 's/IPOIB_LOAD=[^ ]*/IPOIB_LOAD=no/g' $RDMA_CONFIG
+}
+
+function IPOIB_Autostart_Status(){
+	status=$(sed -n '/IPOIB_LOAD=/'p $RDMA_CONFIG)
+        if [ "$status" == "IPOIB_LOAD=yes" ]; then
+                return $ENABLE
+        elif [ "$status" == "IPOIB_LOAD=no" ]; then
+                return $DISABLE
+        else
+                return $NOT_AVAIL
+        fi
+}
+
+# OFA SRP
+function SRP_Autostart_Enable(){
+	sed -i -- 's/SRP_LOAD=[^ ]*/SRP_LOAD=yes/g' $RDMA_CONFIG
+}
+
+function SRP_Autostart_Disable(){
+	sed -i -- 's/SRP_LOAD=[^ ]*/SRP_LOAD=no/g' $RDMA_CONFIG
+}
+
+function SRP_Autostart_Status(){
+	status=$(sed -n '/SRP_LOAD=/'p $RDMA_CONFIG)
+	if [ "$status" == "SRP_LOAD=yes" ]; then
+		return $ENABLE
+	elif [ "$status" == "SRP_LOAD=no" ]; then
+		return $DISABLE
+	else
+		return $NOT_AVAIL
+	fi
+}
+
+#OFA SRPT
+function SRPT_Autostart_Enable(){
+	sed -i -- 's/SRPT_LOAD=[^ ]*/SRPT_LOAD=yes/g' $RDMA_CONFIG
+}
+
+function SRPT_Autostart_Disable(){
+	sed -i -- 's/SRPT_LOAD=[^ ]*/SRPT_LOAD=no/g' $RDMA_CONFIG
+}
+
+function SRPT_Autostart_Status(){
+	status=$(sed -n '/SRPT_LOAD=/'p $RDMA_CONFIG)
+        if [ "$status" == "SRPT_LOAD=yes" ]; then
+                return $ENABLE
+        elif [ "$status" == "SRPT_LOAD=no" ]; then
+                return $DISABLE
+        else
+                return $NOT_AVAIL
+        fi
+}
+
+#OPA IBACM
+function IBACM_Autostart_Enable(){
+	systemctl enable ibacm
+}
+
+function IBACM_Autostart_Disable(){
+	systemctl disable ibacm
+}
+
+function IBACM_Autostart_Status(){
+	status=$(systemctl is-enabled ibacm)
+	if [ "$status" == "enabled" ]; then
+                return $ENABLE
+        elif [ "$status" == "disabled" ]; then
+                return $DISABLE
+        else
+                return $NOT_AVAIL
+        fi
+}
+
+#OPA FM
+function OPAFM_Autostart_Enable(){
+	systemctl enable opafm.service
+}
+
+function OPAFM_Autostart_Disable(){
+	systemctl disable opafm.service
+}
+
+function OPAFM_Autostart_Status(){
+	status=$(systemctl is-enabled opafm.service)
+        if [ "$status" == "enabled" ]; then
+                return $ENABLE
+        elif [ "$status" == "disabled" ]; then
+                return $DISABLE
+        else
+                return $NOT_AVAIL
+        fi
+}
+
+#Tune ARP Table
+function ARPTABLE_TUNE_Autostart_Enable(){
+	systemctl enable opa.service
+	sed -i -- 's/ARPTABLE_TUNING=[^ ]*/ARPTABLE_TUNING=yes/g' $RDMA_CONFIG
+}
+
+function ARPTABLE_TUNE_Autostart_Disable(){
+	systemctl stop opa.service
+	systemctl disable opa.service
+	sed -i -- 's/ARPTABLE_TUNING=[^ ]*/ARPTABLE_TUNING=no/g' $RDMA_CONFIG
+}
+
+function ARPTABLE_TUNE_Autostart_Status(){
+	status=$(sed -n '/ARPTABLE_TUNING=/'p $RDMA_CONFIG)
+	if [ "$status" == "ARPTABLE_TUNING=yes" ]; then
+                return $ENABLE
+        elif [ "$status" == "ARPTABLE_TUNING=no" ]; then
+                return $DISABLE
+        else
+                return $NOT_AVAIL
+        fi
+}
+
+function list_utilities(){
+	echo "Available Utilities"
+	comp_num=${#Autostart_Comp[@]}
+        for ((i = 0; i < comp_num; i++))
+        do
+		declare -a temp=(${Autostart_Comp[$i]})
+		comp_status ${temp[0]} > /dev/null 2>&1
+		retval=$?
+		if [ "$retval" == "0" ]; then
+			echo "-->" ${temp[0]} "[Enabled]"
+		elif [ "$retval" == "1" ]; then
+		echo "-->" ${temp[0]} "[Disabled]"
+		fi
+	done
+}
+
+function comp_enable(){
+	comp_name=$1
+	comp_num=${#Autostart_Comp[@]}
+	for ((i = 0; i < comp_num; i++))
+        do
+		if [ "${Autostart_Comp[i]}" == "$comp_name" ]; then
+                        ${Autostart_Comp[i]}_Autostart_Enable > /dev/null 2>&1
+                        break
+                fi
+        done
+	if [ "$i" == "$comp_num" ]; then
+                echo $comp_name":" No such Component
+        fi
+}
+
+function comp_disable(){
+        comp_name=$1
+        comp_num=${#Autostart_Comp[@]}
+        for ((i = 0; i < comp_num; i++))
+        do
+		if [ "${Autostart_Comp[i]}" == "$comp_name" ]; then
+                        ${Autostart_Comp[i]}_Autostart_Disable > /dev/null 2>&1
+                        break
+                fi
+        done
+	if [ "$i" == "$comp_num" ]; then
+                echo $comp_name":" No such Component
+        fi
+}
+
+function comp_status(){
+        comp_name=$1
+        comp_num=${#Autostart_Comp[@]}
+        for ((i = 0; i < comp_num; i++))
+        do
+		if [ "${Autostart_Comp[i]}" == "$comp_name" ]; then
+			${Autostart_Comp[i]}_Autostart_Status > /dev/null 2>&1
+			retval=$?
+			break
+                fi
+        done
+
+	if [ "$i" == "$comp_num" ]; then
+                echo $comp_name":" No such Component
+		exit 0
+        fi
+	return ${retval}
+}
+
+function usage(){
+	help
+}
+
+function help(){
+	echo "Usage:	opaautostartconfig --[Action] [Utility]"
+	echo "		or"
+	echo "	opaautostartconfig --help"
+	echo "  --help - produce full help text"
+        echo "  --status - shows status of setting"
+        echo "  --enable - enables the setting"
+        echo "  --disable - disables the setting"
+        echo "  --list - lists all available utilities"
+}
+
+#########################################################
+####   OPA Auto Start Script
+#########################################################
+
+if [ "$(id -u)" != "0" ]; then
+	echo "The script must be run as root"
+	exit 0
+fi
+
+Arguments=$@
+declare -a Arg_Array=(${Arguments})
+arg_num=${#Arg_Array[@]}
+
+if [ "${Arg_Array[0]}" == "--status" ]; then
+	for ((j = 1; j < arg_num; j++))
+	do
+		comp_status ${Arg_Array[j]}
+		retval=$?
+		if [ "$retval" == "0" ]; then
+			echo ${Arg_Array[j]} [ENABLED]
+		elif [ "$retval" == "1" ]; then
+			echo ${Arg_Array[j]} [DISABLED]
+		else
+			echo ${Arg_Array[j]} [NOT INSTALLED]
+		fi
+	done
+
+elif [ "${Arg_Array[0]}" == "--enable" ]; then
+	for ((j = 1; j < arg_num; j++))
+	do
+		comp_enable ${Arg_Array[j]}
+	done
+
+elif [ "${Arg_Array[0]}" == "--disable" ]; then
+	for ((j = 1; j < arg_num; j++))
+	do
+		comp_disable ${Arg_Array[j]}
+	done
+
+elif [ "${Arg_Array[0]}" == "--list" ]; then
+	list_utilities
+
+elif [ "${Arg_Array[0]}" == "--help" ]; then
+	help
+else
+	usage
+fi
