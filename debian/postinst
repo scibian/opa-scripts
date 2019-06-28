@@ -1,0 +1,36 @@
+#!/bin/sh
+
+set -e
+
+#DEBHELPER#
+
+ if [ "$OPA_UDEV_RULES" = "0" ]; then
+   opasystemconfig --disable Udev_Access
+ else opasystemconfig --enable Udev_Access
+ fi
+ if [ "$OPA_LIMITS_CONF" = "0" ]; then
+   opasystemconfig --disable Memory_Limit
+ else opasystemconfig --enable Memory_Limit
+ fi
+ grep -q '^ARPTABLE_TUNING=' /etc/rdma/rdma.conf || echo 'ARPTABLE_TUNING=' >> /etc/rdma/rdma.conf
+ if [ "$OPA_ARPTABLE_TUNING" = "0" ]; then
+   opaautostartconfig  --disable ARPTABLE_TUNE
+ else opaautostartconfig --enable ARPTABLE_TUNE
+ fi
+
+ # SRP and SRPT configs are not currently supported on Debian
+ # if [ "$OPA_SRP_LOAD" = "1" ]; then
+ #   opaautostartconfig  --enable SRP
+ # else opaautostartconfig --disable SRP
+ # fi
+ # if [ "$OPA_SRPT_LOAD" = "1" ]; then
+ #   opaautostartconfig  --enable SRPT
+ # else opaautostartconfig --disable SRPT
+ # fi
+
+ if [ "$OPA_IRQBALANCE" = "0" ]; then
+   opasystemconfig --disable Irq_Balance
+ else opasystemconfig --enable Irq_Balance
+ fi
+
+

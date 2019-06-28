@@ -1,0 +1,80 @@
+Description: Port opasystemconfig to Debian
+ opasystemconfig, as delivered in RHEL IFS, doesn't work correctly on
+ Debian due to different config paths and some rc-style services.
+ This patch corrects these issues.
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Forwarded: not-needed
+Last-Update: <2010-02-07>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/opasystemconfig
++++ b/opasystemconfig
+@@ -58,9 +58,17 @@
+ 		fi
+ }
+ 
+-IRQFILE=/etc/sysconfig/irqbalance
+-IRQBAKFILE=/etc/sysconfig/irqbalance.bak
+-IRQ_ARGS_VALUE="policyscript=/etc/sysconfig/opa/hintpolicy_exact_hfi1.sh"
++SYSCONFIG_DIR=/etc/sysconfig
++POLICYSCRIPT_DIR=$SYSCONFIG_DIR/opa
++SHEXT=".sh"
++if [ -f /etc/debian_version ] ; then
++	SYSCONFIG_DIR=/etc/default
++	POLICYSCRIPT_DIR=/etc/opa
++	SHEXT=
++fi
++IRQFILE=$SYSCONFIG_DIR/irqbalance
++IRQBAKFILE=$SYSCONFIG_DIR/irqbalance.bak
++IRQ_ARGS_VALUE="policyscript=$POLICYSCRIPT_DIR/hintpolicy_exact_hfi1$SHEXT"
+ 
+ #Irq_balance
+ function Irq_Balance_SysConfig_Enable(){
+@@ -76,7 +84,7 @@
+ 	# We must also preserve the currently set arguments, so that we can prepend the policyscript to them in our 'sed' command
+ 	else
+ 		local irq_current_value=$(echo ${irq_current_line} | cut -d= -f2-)
+-		if $(echo ${irq_current_value} | grep -q "$IRQ_ARGS_VALUE") || $(echo ${irq_current_value} | grep -q 'h hintpolicy_exact_hfi1.sh' ); then
++		if $(echo ${irq_current_value} | grep -q "$IRQ_ARGS_VALUE") || $(echo ${irq_current_value} | grep -q "h hintpolicy_exact_hfi1$SHEXT" ); then
+ 			echo "$IRQ_ARGS_VALUE already set"
+ 		elif $(echo ${irq_current_value} | grep -q \"); then # SLES Default. The args are set to an empty string: IRQBALANCE_ARGS=""
+ 			local irq_current_value_in_quotes=$(echo ${irq_current_value} | tr -d \")
+@@ -128,12 +136,16 @@
+ 		if $(echo ${service_output} | grep -q 'unrecognized service'); then
+ 			local status="notfound"
+ 		else
+-			chkconfig irqbalance
++			local status=$(chkconfig irqbalance 2>&1)
+ 			local status_rc=$?
+ 			if [ $status_rc -eq 0 ];then
+-				local status="enabled"
+-			elif [ $status_rc -eq 1 ]; then
+-				local status="disabled"
++				if $(echo ${status} | grep -q ' on$'); then
++					status="enabled"
++				elif $(echo ${status} | grep -q ' off$'); then
++					status="disabled"
++				fi
++			else
++				status = "error"
+ 			fi
+ 		fi
+ 	else
+@@ -151,7 +163,7 @@
+ }
+ 
+ #Memory Limit
+-APPEND_FILE=/etc/sysconfig/opa/limits.conf
++APPEND_FILE=/etc/opa/limits.conf
+ LIMIT_FILE=/etc/security/limits.conf
+ LIMIT_BAKFILE=/etc/security/limits.conf.bak
+ 
+@@ -181,7 +193,7 @@
+ }
+ 
+ #Udev Access
+-SOURCE_FILE=/etc/sysconfig/opa/udev.rules
++SOURCE_FILE=/etc/opa/udev.rules
+ RULE_FILE=/etc/udev/rules.d/05-opa.rules
+ 
+ function Udev_Access_SysConfig_Enable(){	

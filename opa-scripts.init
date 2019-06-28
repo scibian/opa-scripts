@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# chkconfig: 2345 10 90
+# description: Initialize the OPA layer
+#
+# /etc/rc.d/init.d/opa.init
+#
+### BEGIN INIT INFO
+# Provides:             opa.init
+# Required-Start:	$network
+# Required-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Description: Initialize the OPA layer
+# Short-Description: initialize the OPA layer
+### END INIT INFO
+
+RETVAL=0
+PIDFILE=/var/run/opa-scripts.pid
+
+# See how we were called.
+case "$1" in
+  start)
+	[ $UID -eq 0 ] || exit 4
+	echo $$ > $PIDFILE || exit 1
+	echo -n "Initializing the OPA layer... "
+	  /usr/sbin/opa-init-kernel
+	[ $? -eq 0 ] || RETVAL=1
+	rm -f $PIDFILE
+	echo
+	;;
+
+  status)
+	[ -f $PIDFILE ] || RETVAL=3
+	;;
+
+  stop)
+	[ $UID -eq 0 ] || exit 4
+	;;
+
+  restart|reload|force-reload|condrestart|try-restart)
+	;;
+
+  *)
+	echo "Usage: sysstat {start|stop|status|restart|reload|force-reload|condrestart|try-restart}"
+	RETVAL=2
+esac
+
+exit ${RETVAL}
