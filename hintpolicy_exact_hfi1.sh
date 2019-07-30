@@ -1,6 +1,7 @@
-#!/usr/bin/make -f
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
 #
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2015-2018, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,29 +26,25 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# END_ICS_COPYRIGHT8   ****************************************
 
-SYS_MAN1_DIR := usr/share/man/man1
-INSTALL_DIR := debian/tmp
+## ${1} - path of device ( /sys/bus/pci/devices/<pci id> )
+## ${2} - irq number
+## If no infiniband or Hfi1 directory, return exit -1 to indicate error
+## executing this policy script
+## Irqbalance with multiple scripts support for policyscript option expect
+## return exit codes as mention in
+## commit:6e6ac7bc658e2b792d441cfbdc410e73f50a0238 irqbalance repo.
 
-%:
-	dh $@ --with systemd --parallel
+if [ ! -d ${1}/infiniband/hfi1_* ]; then
+	exit 2
+fi
 
-override_dh_auto_install:
-	install -D -m 0755 opad.sbin $(INSTALL_DIR)/usr/sbin/opa-init-kernel
-	install -D -m 0755 arptbl_tuneup $(INSTALL_DIR)/usr/sbin/opa-arptbl-tuneup
-	install -D -m 0755 -t $(INSTALL_DIR)/sbin opaautostartconfig
-	install -D -m 0755 -t $(INSTALL_DIR)/sbin opasystemconfig
-	install -D -m 0755 -t $(INSTALL_DIR)/etc/rdma rdma.conf
-	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa version_delta
-	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa limits.conf
-	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa udev.permissions
-	install -D -m 0644 -t $(INSTALL_DIR)/etc/opa udev.rules
-	install -D -m 0644 -t $(INSTALL_DIR)/lib/systemd/system opa.service
-	install -D -m 0644 -t $(INSTALL_DIR)/$(SYS_MAN1_DIR) opa-init-kernel.1
-	gzip $(INSTALL_DIR)/$(SYS_MAN1_DIR)/opa-init-kernel.1
-	install -D -m 0644 -t $(INSTALL_DIR)/$(SYS_MAN1_DIR) opa-arptbl-tuneup.1
-	gzip $(INSTALL_DIR)/$(SYS_MAN1_DIR)/opa-arptbl-tuneup.1
-	install -D -m 0644 -t $(INSTALL_DIR)/$(SYS_MAN1_DIR) opaautostartconfig.1
-	gzip $(INSTALL_DIR)/$(SYS_MAN1_DIR)/opaautostartconfig.1
-	install -D -m 0644 -t $(INSTALL_DIR)/$(SYS_MAN1_DIR) opasystemconfig.1
-	gzip $(INSTALL_DIR)/$(SYS_MAN1_DIR)/opasystemconfig.1
+if [ -d /proc/irq/${2}/hfi1* ] && [ -d /proc/irq/${2} ]; then
+	cat /proc/irq/${2}/affinity_hint > /proc/irq/${2}/smp_affinity
+	echo 'ban=true'
+else
+	exit 1
+fi
+
+exit 0

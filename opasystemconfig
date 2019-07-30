@@ -1,11 +1,11 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-#
-# Copyright (c) 2017, Intel Corporation
-#
+# 
+# Copyright (c) 2015-2017, Intel Corporation
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-#
+# 
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# 
 # END_ICS_COPYRIGHT8   ****************************************
 
 # The script helps to configure system settings
@@ -45,9 +45,23 @@ SysConfig_Comp[0]="Irq_Balance"
 SysConfig_Comp[1]="Memory_Limit"
 SysConfig_Comp[2]="Udev_Access"
 
+# Find start system in use
+function get_start_system() {
+		if [ -e /proc/1/cmdline ]; then
+			echo $(ps -o comm= 1)
+		elif [ -d /usr/lib/systemd ]; then
+			echo 'systemd'
+		elif [ -d /etc/init.d ]; then
+			echo 'init'
+		else
+			echo ''
+		fi
+}
+
 IRQFILE=/etc/sysconfig/irqbalance
 IRQBAKFILE=/etc/sysconfig/irqbalance.bak
-IRQ_ARGS_VALUE="hintpolicy=exact"
+IRQ_ARGS_VALUE="policyscript=/etc/sysconfig/opa/hintpolicy_exact_hfi1.sh"
+
 #Irq_balance
 function Irq_Balance_SysConfig_Enable(){
 	# Grep file to see if IRQBALANCE_ARGS is set
@@ -59,19 +73,19 @@ function Irq_Balance_SysConfig_Enable(){
 		echo "IRQBALANCE_ARGS=\"--$IRQ_ARGS_VALUE\"" >> $IRQFILE
 
 	# If argument is found, we must parse it to see if hintpolicy=exact is already set.
-	# We must also preserve the currently set arguments, so that we can prepend the hintpolicy to them in our 'sed' command
+	# We must also preserve the currently set arguments, so that we can prepend the policyscript to them in our 'sed' command
 	else
 		local irq_current_value=$(echo ${irq_current_line} | cut -d= -f2-)
-
-		if $(echo ${irq_current_value} | grep -q "$IRQ_ARGS_VALUE") || $(echo ${irq_current_value} | grep -q 'h exact'); then
+		if $(echo ${irq_current_value} | grep -q "$IRQ_ARGS_VALUE") || $(echo ${irq_current_value} | grep -q 'h hintpolicy_exact_hfi1.sh' ); then
 			echo "$IRQ_ARGS_VALUE already set"
-		elif $(echo ${irq_current_value} | grep -q \"); then            # SLES Default. The args are set to an empty string: IRQBALANCE_ARGS=""
+		elif $(echo ${irq_current_value} | grep -q \"); then # SLES Default. The args are set to an empty string: IRQBALANCE_ARGS=""
 			local irq_current_value_in_quotes=$(echo ${irq_current_value} | tr -d \")
-			[ -n "${irq_current_value_in_quotes}" ] && irq_current_value_in_quotes=" ${irq_current_value_in_quotes}" # If the value is not empty, we will add a space to separate it from the hintpolicy.
-			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE}${irq_current_value_in_quotes}\"/g"
+			# If the value is not empty, we will add a space to separate it from the hintpolicy.
+			[ -n "${irq_current_value_in_quotes}" ] && irq_current_value_in_quotes=" ${irq_current_value_in_quotes}"
+			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE//\//\\/}${irq_current_value_in_quotes//\//\\/}\"/g"
 		else                                                            # RHEL Default. The args are commented out: #IRQBALANCE_ARGS=
-			[ -n "${irq_current_value}" ] && irq_current_value=" ${irq_current_value}" # If the value is not empty, we will add a space to separate it from the hintpolicy.
-			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE}${irq_current_value}\"/g"
+			[ -n "${irq_current_value}" ] && irq_current_value=" ${irq_current_value}" # If the value is not empty, we will add a space to separate it from the policyscript.
+			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE//\//\\/}${irq_current_value//\//\\/}\"/g"
 		fi
 
 		cat $IRQFILE > $IRQBAKFILE
@@ -79,7 +93,7 @@ function Irq_Balance_SysConfig_Enable(){
 	fi
 
 	# Check for systemd vs upstart
-	local start_system=$(ps -o comm= 1)
+	local start_system=$(get_start_system)
 	if [ "${start_system}" = "systemd" ]; then
 		systemctl enable irqbalance
 		systemctl restart irqbalance
@@ -94,7 +108,7 @@ function Irq_Balance_SysConfig_Enable(){
 function Irq_Balance_SysConfig_Disable(){
 	cat $IRQBAKFILE > $IRQFILE
 	# Check for systemd vs upstart
-	local start_system=$(ps -o comm= 1)
+	local start_system=$(get_start_system)
 	if [ "${start_system}" = "systemd" ]; then
 		systemctl disable irqbalance
 	elif [ "${start_system}" = "init" ]; then
@@ -106,7 +120,7 @@ function Irq_Balance_SysConfig_Disable(){
 
 function Irq_Balance_SysConfig_Status(){
 	# Check for systemd vs upstart
-	local start_system=$(ps -o comm= 1)
+	local start_system=$(get_start_system)
 	if [ "${start_system}" = "systemd" ]; then
 		local status=$(systemctl is-enabled irqbalance)
 	elif [ "${start_system}" = "init" ]; then
@@ -264,7 +278,6 @@ function usage(){
 }
 
 function help(){
-	TEST=avda
         echo "Usage:	opasystemconfig --[Action] [Utility]"
         echo "          or"
         echo "	opasystemconfig --help"
@@ -282,7 +295,7 @@ function help(){
 
 if [ "$(id -u)" != "0" ]; then
         echo "The script must be run as root"
-        exit 0
+        exit 4
 fi
 
 Arguments=$@
@@ -322,6 +335,5 @@ elif [ "${Arg_Array[0]}" == "--help" ]; then
         help
 else
         usage
+	exit 1
 fi
-
-echo $TEST
