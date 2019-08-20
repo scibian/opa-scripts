@@ -17,14 +17,17 @@ set -e
    opaautostartconfig  --disable ARPTABLE_TUNE
  else opaautostartconfig --enable ARPTABLE_TUNE
  fi
- if [ "$OPA_SRP_LOAD" = "1" ]; then
-   opaautostartconfig  --enable SRP
- else opaautostartconfig --disable SRP
- fi
- if [ "$OPA_SRPT_LOAD" = "1" ]; then
-   opaautostartconfig  --enable SRPT
- else opaautostartconfig --disable SRPT
- fi
+
+ # SRP and SRPT configs are not currently supported on Debian
+ # if [ "$OPA_SRP_LOAD" = "1" ]; then
+ #   opaautostartconfig  --enable SRP
+ # else opaautostartconfig --disable SRP
+ # fi
+ # if [ "$OPA_SRPT_LOAD" = "1" ]; then
+ #   opaautostartconfig  --enable SRPT
+ # else opaautostartconfig --disable SRPT
+ # fi
+
  if [ "$OPA_IRQBALANCE" = "0" ]; then
    opasystemconfig --disable Irq_Balance
  else opasystemconfig --enable Irq_Balance

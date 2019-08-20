@@ -1,8 +1,20 @@
-opa-scripts (1.1-1-2-1ifs+deb8sci8+opa10.8u1) scibian8+opa10.8; urgency=medium
+opa-scripts (1.2-2-1-1ifs+deb8) jessie; urgency=medium
 
-  * New version opa-scripts
+  * Import opa-scripts 1.2-2 from IFS RHEL76 10.9.2.0.9 upstream.
+    Upstream version is still 1.2-2, but the code has changed. Add -1
+    to upstream version.
 
- -- M'hamed Bouaziz <mhamed-externe.bouaziz@edf.fr>  Wed, 16 Jan 2019 15:09:36 +0100
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Fri, 19 Apr 2019 14:15:11 -0500
+
+opa-scripts (1.2-2-1ifs+deb8) jessie; urgency=medium
+
+  * Import opa-scripts 1.2-1 from IFS RHEL76 10.9.0.1.5 upstream.
+  * Revise dependencies.
+  * Change port timeout in opad.sbin from 50s to 5s.
+  * Remove SRP, SRPT and IPOIB options from opaautostartconfig. /etc/rdma.conf
+    is not used to load modules on Debian.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Tue, 19 Feb 2019 14:40:09 -0600
 
 opa-scripts (1.1-1-2-1ifs+deb8) jessie; urgency=medium
 

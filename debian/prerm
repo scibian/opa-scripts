@@ -20,12 +20,14 @@ if [ "$OPA_INSTALL_CALLER" != "0" ]; then
  fi
  # modifications to the conf file will not be fixed when the package is reinstalled
  # sed -i -- '/^ARPTABLE_TUNING=[^ ]*/ d' /etc/rdma/rdma.conf
- if [ "$OPA_SRP_LOAD" != "1" ]; then
-   opaautostartconfig --disable SRP
- fi
- if [ "$OPA_SRPT_LOAD" != "1" ]; then
-   opaautostartconfig --disable SRPT
- fi
+
+ # SRP and SRPT configs are not currently supported on Debian
+ # if [ "$OPA_SRP_LOAD" != "1" ]; then
+ #   opaautostartconfig --disable SRP
+ # fi
+ # if [ "$OPA_SRPT_LOAD" != "1" ]; then
+ #   opaautostartconfig --disable SRPT
+ # fi
  if [ "$OPA_IRQBALANCE" != "1" ]; then
    opasystemconfig --disable Irq_Balance
  fi

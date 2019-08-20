@@ -60,7 +60,8 @@ function get_start_system() {
 
 IRQFILE=/etc/sysconfig/irqbalance
 IRQBAKFILE=/etc/sysconfig/irqbalance.bak
-IRQ_ARGS_VALUE="hintpolicy=exact"
+IRQ_ARGS_VALUE="policyscript=/etc/sysconfig/opa/hintpolicy_exact_hfi1.sh"
+
 #Irq_balance
 function Irq_Balance_SysConfig_Enable(){
 	# Grep file to see if IRQBALANCE_ARGS is set
@@ -72,19 +73,19 @@ function Irq_Balance_SysConfig_Enable(){
 		echo "IRQBALANCE_ARGS=\"--$IRQ_ARGS_VALUE\"" >> $IRQFILE
 
 	# If argument is found, we must parse it to see if hintpolicy=exact is already set.
-	# We must also preserve the currently set arguments, so that we can prepend the hintpolicy to them in our 'sed' command
+	# We must also preserve the currently set arguments, so that we can prepend the policyscript to them in our 'sed' command
 	else
 		local irq_current_value=$(echo ${irq_current_line} | cut -d= -f2-)
-
-		if $(echo ${irq_current_value} | grep -q "$IRQ_ARGS_VALUE") || $(echo ${irq_current_value} | grep -q 'h exact'); then
+		if $(echo ${irq_current_value} | grep -q "$IRQ_ARGS_VALUE") || $(echo ${irq_current_value} | grep -q 'h hintpolicy_exact_hfi1.sh' ); then
 			echo "$IRQ_ARGS_VALUE already set"
-		elif $(echo ${irq_current_value} | grep -q \"); then            # SLES Default. The args are set to an empty string: IRQBALANCE_ARGS=""
+		elif $(echo ${irq_current_value} | grep -q \"); then # SLES Default. The args are set to an empty string: IRQBALANCE_ARGS=""
 			local irq_current_value_in_quotes=$(echo ${irq_current_value} | tr -d \")
-			[ -n "${irq_current_value_in_quotes}" ] && irq_current_value_in_quotes=" ${irq_current_value_in_quotes}" # If the value is not empty, we will add a space to separate it from the hintpolicy.
-			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE}${irq_current_value_in_quotes}\"/g"
+			# If the value is not empty, we will add a space to separate it from the hintpolicy.
+			[ -n "${irq_current_value_in_quotes}" ] && irq_current_value_in_quotes=" ${irq_current_value_in_quotes}"
+			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE//\//\\/}${irq_current_value_in_quotes//\//\\/}\"/g"
 		else                                                            # RHEL Default. The args are commented out: #IRQBALANCE_ARGS=
-			[ -n "${irq_current_value}" ] && irq_current_value=" ${irq_current_value}" # If the value is not empty, we will add a space to separate it from the hintpolicy.
-			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE}${irq_current_value}\"/g"
+			[ -n "${irq_current_value}" ] && irq_current_value=" ${irq_current_value}" # If the value is not empty, we will add a space to separate it from the policyscript.
+			local sed_command="s/^IRQBALANCE_ARGS=.*/IRQBALANCE_ARGS=\"--${IRQ_ARGS_VALUE//\//\\/}${irq_current_value//\//\\/}\"/g"
 		fi
 
 		cat $IRQFILE > $IRQBAKFILE
@@ -277,7 +278,6 @@ function usage(){
 }
 
 function help(){
-	TEST=avda
         echo "Usage:	opasystemconfig --[Action] [Utility]"
         echo "          or"
         echo "	opasystemconfig --help"
@@ -295,7 +295,7 @@ function help(){
 
 if [ "$(id -u)" != "0" ]; then
         echo "The script must be run as root"
-        exit 0
+        exit 4
 fi
 
 Arguments=$@
@@ -335,6 +335,5 @@ elif [ "${Arg_Array[0]}" == "--help" ]; then
         help
 else
         usage
+	exit 1
 fi
-
-echo $TEST

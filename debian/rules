@@ -1,7 +1,6 @@
 #!/usr/bin/make -f
 
 VERSION := $(shell cat version_delta)
-INSTFILES := $(shell find debian/opa-scripts -type f)
 DESTDIR=debian/opa-scripts
 
 %:
@@ -28,18 +27,21 @@ override_dh_auto_install:
 	install -d -m 0755 $(DESTDIR)/etc/modules-load.d
 	install -m 0644 debian/conf/etc-modules-load-rdma.conf $(DESTDIR)/etc/modules-load.d/rdma.conf
 
-	install -d -m 0755 $(DESTDIR)/sbin
-	install -m 0755 opaautostartconfig $(DESTDIR)/sbin/opaautostartconfig
-	install -m 0755 opasystemconfig $(DESTDIR)/sbin/opasystemconfig
+	install -d -m 0755 $(DESTDIR)/usr/sbin
+	install -m 0755 opaautostartconfig $(DESTDIR)/usr/sbin/opaautostartconfig
+	install -m 0755 opasystemconfig $(DESTDIR)/usr/sbin/opasystemconfig
 
 	install -d -m 0755 $(DESTDIR)/usr/share/man/man1
 	install -m 0644 opa-arptbl-tuneup.1 $(DESTDIR)/usr/share/man/man1
 	install -m 0644 opa-init-kernel.1 $(DESTDIR)/usr/share/man/man1
 	install -m 0644 opaautostartconfig.1 $(DESTDIR)/usr/share/man/man1
+	install -m 0644 opasystemconfig.1 $(DESTDIR)/usr/share/man/man1
 
 	install -d -m 0755 $(DESTDIR)/usr/lib/opa
 
 	install -m 0644 version_delta $(DESTDIR)/etc/opa/version_delta
+
+	install -m 0755 hintpolicy_exact_hfi1.sh $(DESTDIR)/etc/opa/hintpolicy_exact_hfi1
 
 	echo `find $(DESTDIR) -type f -exec sed "s/\(ICS VERSION STRING:\s*\)unknown/\1$(VERSION)/" -i {} \; `
 

@@ -1,0 +1,33 @@
+Description: Port opaautostartconfig to Debian
+ Debian doesn't use /etc/rdma.conf to load modules. Remove IPOIB, SRP and SRPT
+ options from opaautostartconfig.
+ .
+ Corrects use of missing usleep utility.
+Author: Brian T. Smith <bsmith@systemfabricworks.com>
+Forwarded: not-needed
+Last-Update: <2019-02-25>
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/opaautostartconfig
++++ b/opaautostartconfig
+@@ -44,12 +44,20 @@
+ NOT_AVAIL=2
+ 
+ Autostart_Comp[0]="HFI_Driver"
++# IPOIB, SRP and SRPT are supported via /etc/rdma.conf, which isn't used to
++# load modules on Debian
++if [ -f /etc/debian_version ] ; then
++Autostart_Comp[1]="IBACM"
++Autostart_Comp[2]="OPAFM"
++Autostart_Comp[3]="ARPTABLE_TUNE"
++else
+ Autostart_Comp[1]="IPOIB"
+ Autostart_Comp[2]="SRP"
+ Autostart_Comp[3]="SRPT"
+ Autostart_Comp[4]="IBACM"
+ Autostart_Comp[5]="OPAFM"
+ Autostart_Comp[6]="ARPTABLE_TUNE"
++fi
+ 
+ # HFI Driver
+ BLACKLIST_FILE="/etc/modprobe.d/opa-blacklist.conf";
