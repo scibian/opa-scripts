@@ -1,3 +1,10 @@
+opa-scripts (1.2-2-1-1ifs+deb8sci8+opa10.9u1) scibian8+opa10.9; urgency=medium
+
+  * New release for scibian9+opa10.9
+  * Re-scibianize package
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Tue, 20 Aug 2019 16:30:57 +0200
+
 opa-scripts (1.2-2-1-1ifs+deb8) jessie; urgency=medium
 
   * Import opa-scripts 1.2-2 from IFS RHEL76 10.9.2.0.9 upstream.
