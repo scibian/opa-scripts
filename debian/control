@@ -1,11 +1,9 @@
 Source: opa-scripts
-Maintainer: Scibian Project <packaging@scibian.org>
+Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
 Section: misc
 Priority: extra
 Standards-Version: 3.9.8
 Homepage: http://www.intel.com
-Vcs-Git: https://github.com/scibian/opa-scripts.git
-Vcs-Browser: https://github.com/scibian/opa-scripts
 Build-Depends: debhelper (>= 10),
                dh-systemd,
 
