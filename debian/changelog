@@ -1,3 +1,11 @@
+opa-scripts (1.2-2-3-1ifs+deb8) jessie; urgency=medium
+
+  * Import opa-scripts 1.2-2 from IFS RHEL76 10.10.1.0.36 upstream.
+    Upstream version is still 1.2-2, but the code has changed. Add -3
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 03 Feb 2020 14:20:06 -0600
+
 opa-scripts (1.2-2-2-1ifs+deb8) jessie; urgency=medium
 
   * Import opa-scripts 1.2-2 from IFS RHEL76 10.9.2.0.9 upstream.
