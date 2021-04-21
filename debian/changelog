@@ -1,3 +1,19 @@
+opa-scripts (1.2-2-5-1ifs+deb9) stretch; urgency=medium
+
+  * Import opa-scripts 1.2-2 from IFS RHEL77 10.10.3.1.1 upstream.
+    Upstream version is still 1.2-2, but the code has changed. Add -5
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Sun, 13 Dec 2020 15:43:07 -0600
+
+opa-scripts (1.2-2-4-1ifs+deb9) stretch; urgency=medium
+
+  * Import opa-scripts 1.2-2 from IFS RHEL77 10.10.2.0.44 upstream.
+    Upstream version is still 1.2-2, but the code has changed. Add -4
+    to upstream version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 22 Jun 2020 13:56:46 -0500
+
 opa-scripts (1.2-2-3-1ifs+deb9sci9opa10.10u2) scibian9+opa10.10; urgency=medium
 
   * New release version 
